@@ -44,11 +44,16 @@ export default function DashboardPage() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <DashCard title="📚 Courses" desc="Browse and enroll in available courses" href="/courses" />
-          {user?.role === 'teacher' && (
-            <DashCard title="➕ Create Course" desc="Create and manage your courses" href="/courses/create" />
+          <DashCard title="📚 Browse Courses" desc="Explore all available courses" href="/courses" />
+          {(user?.role === 'student') && (
+            <DashCard title="🎓 My Learning" desc="Continue your enrolled courses" href="/my-learning" />
           )}
-          <DashCard title="🎬 Lectures" desc="Access video lectures and materials" href="/courses" />
+          {(user?.role === 'teacher' || user?.role === 'admin') && (
+            <DashCard title="🗂️ My Courses" desc="Manage courses you teach" href="/my-courses" />
+          )}
+          {(user?.role === 'teacher' || user?.role === 'admin') && (
+            <DashCard title="➕ Create Course" desc="Create and publish a new course" href="/courses/new" />
+          )}
           <DashCard title="📝 Assignments" desc="View and submit assignments" href="/assignments" />
           <DashCard title="📡 Live Classes" desc="Join scheduled live sessions" href="/livestream" />
           <DashCard title="🔔 Notifications" desc="View your notifications" href="/notifications" />

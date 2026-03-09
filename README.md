@@ -221,7 +221,7 @@ Copy `.env.example` to `.env` and fill in all required values.
 ### Completed
 - [x] Phase 1 – Project Scaffolding & Infrastructure
 - [x] Phase 2 – Authentication Module
-- [ ] Phase 3 – Course Management (CMS)
+- [x] Phase 3 – Course Management (CMS)
 - [ ] Phase 4 – Video Lecture System (HLS)
 - [ ] Phase 5 – Material Sharing
 - [ ] Phase 6 – Assignment System
