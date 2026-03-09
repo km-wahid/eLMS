@@ -219,8 +219,8 @@ Copy `.env.example` to `.env` and fill in all required values.
 ## 🗺️ Roadmap
 
 ### Completed
-- [ ] Phase 1 – Project Scaffolding & Infrastructure
-- [ ] Phase 2 – Authentication Module
+- [x] Phase 1 – Project Scaffolding & Infrastructure
+- [x] Phase 2 – Authentication Module
 - [ ] Phase 3 – Course Management (CMS)
 - [ ] Phase 4 – Video Lecture System (HLS)
 - [ ] Phase 5 – Material Sharing

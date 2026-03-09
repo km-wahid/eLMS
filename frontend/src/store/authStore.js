@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-const useAuthStore = create(
+export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
@@ -17,6 +17,13 @@ const useAuthStore = create(
 
       updateUser: (user) => set({ user }),
 
+      clearAuth: () => {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false })
+      },
+
+      // alias
       logout: () => {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
