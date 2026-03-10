@@ -132,6 +132,15 @@ class EnrollView(APIView):
         if Enrollment.objects.filter(student=request.user, course=course).exists():
             return Response({'detail': 'Already enrolled.'}, status=status.HTTP_400_BAD_REQUEST)
         enrollment = Enrollment.objects.create(student=request.user, course=course)
+        # Send enrollment confirmation email asynchronously
+        try:
+            from courses.tasks import send_enrollment_confirmation
+            name = request.user.get_full_name() or request.user.email
+            send_enrollment_confirmation.delay(
+                request.user.email, name, course.title, course.slug
+            )
+        except Exception:
+            pass
         return Response(EnrollmentSerializer(enrollment).data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, course_slug):

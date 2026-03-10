@@ -26,6 +26,13 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
+        # Fire welcome email asynchronously
+        try:
+            from accounts.tasks import send_welcome_email
+            name = user.get_full_name() or user.email
+            send_welcome_email.delay(user.email, name)
+        except Exception:
+            pass
         return Response({
             'user': UserProfileSerializer(user).data,
             'tokens': {
@@ -73,4 +80,3 @@ class ChangePasswordView(generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'detail': 'Password updated successfully.'})
-

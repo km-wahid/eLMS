@@ -1,16 +1,13 @@
-version: '3.9'
-
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:15
+    pull_policy: never
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${DB_NAME:-elms_db}
       POSTGRES_USER: ${DB_USER:-elms_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-elms_password}
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-elms_user}"]
       interval: 10s
@@ -18,9 +15,8 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    image: redis:7
+    pull_policy: never
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -96,6 +92,7 @@ services:
 
   nginx:
     image: nginx:alpine
+    pull_policy: never
     ports:
       - "80:80"
     volumes:

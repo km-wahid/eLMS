@@ -1,3 +1,9 @@
 from rest_framework import serializers
+from .models import Notification
 
-# Serializers will be defined in phase-specific implementations
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Notification
+        fields = ['id', 'type', 'title', 'message', 'data', 'is_read', 'created_at']
+        read_only_fields = fields

@@ -1,72 +1,55 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+import { PlayCircle, Clock, BookOpen, Award } from 'lucide-react';
+
+const ENROLLED = [
+  { slug:'python-for-beginners', title:'Python for Beginners', instructor:'Dr. Sarah Ahmed', progress:65, color:'from-indigo-500 to-purple-600', total:42, done:27 },
+  { slug:'react-complete-guide', title:'React – The Complete Guide', instructor:'Prof. Ali Hassan', progress:30, color:'from-blue-500 to-cyan-600', total:55, done:16 },
+  { slug:'data-science-bootcamp', title:'Data Science Bootcamp', instructor:'Dr. Ayesha Khan', progress:10, color:'from-green-500 to-teal-600', total:80, done:8 },
+];
 
 export default function MyEnrollmentsPage() {
-  const [enrollments, setEnrollments] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.get('/courses/enrollments/mine/')
-      .then(r => setEnrollments(r.data))
-      .finally(() => setLoading(false));
-  }, []);
-
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">My Learning</h1>
-
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
-          </div>
-        ) : enrollments.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
-            <p className="text-5xl mb-4">🎓</p>
-            <p className="text-lg">You haven't enrolled in any courses yet.</p>
-            <Link to="/courses" className="btn btn-primary mt-4 inline-block">Browse Courses</Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {enrollments.map(e => (
-              <div key={e.id} className="card">
-                <div className="bg-indigo-100 h-28 rounded-lg mb-3 flex items-center justify-center text-3xl overflow-hidden">
-                  {e.thumbnail_url ? (
-                    <img src={e.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                  ) : '📚'}
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">My Learning</h1>
+        <p className="text-gray-500 text-sm mb-8">{ENROLLED.length} enrolled courses</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {ENROLLED.map(c => (
+            <div key={c.slug} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+              <div className={`h-28 bg-gradient-to-r ${c.color} relative`}>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <PlayCircle className="h-12 w-12 text-white/80" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{e.course_title}</h3>
-                <p className="text-sm text-gray-500 mb-3">by {e.teacher_name}</p>
-                {/* Progress bar */}
+                <div className="absolute top-3 right-3 bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {c.progress}%
+                </div>
+              </div>
+              <div className="p-4">
+                <h2 className="font-bold text-gray-900 text-sm leading-snug mb-1">{c.title}</h2>
+                <p className="text-xs text-gray-400 mb-3">{c.instructor}</p>
                 <div className="mb-3">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Progress</span>
-                    <span>{Math.round(e.progress)}%</span>
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>{c.done} / {c.total} lectures</span>
+                    <span>{c.progress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-indigo-600 h-2 rounded-full transition-all"
-                      style={{ width: `${e.progress}%` }}
-                    />
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${c.progress}%` }} />
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    e.status === 'completed' ? 'bg-green-100 text-green-700'
-                    : e.status === 'dropped' ? 'bg-red-100 text-red-700'
-                    : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {e.status}
-                  </span>
-                  <Link to={`/courses/${e.course_id}`} className="btn btn-secondary text-xs px-3 py-1">
-                    {e.progress > 0 ? 'Continue →' : 'Start →'}
+                <div className="flex gap-2">
+                  <Link to={`/courses/${c.slug}/learn`}
+                    className="flex-1 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl text-center hover:bg-indigo-700 transition-colors">
+                    Continue →
+                  </Link>
+                  <Link to={`/courses/${c.slug}`}
+                    className="px-3 py-2 border border-gray-200 text-gray-500 text-xs rounded-xl hover:bg-gray-50 transition-colors">
+                    Info
                   </Link>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

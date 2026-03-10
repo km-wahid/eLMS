@@ -27,8 +27,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'avatar', 'bio', 'created_at']
-        read_only_fields = ['id', 'email', 'role', 'created_at']
+        fields = ['id', 'email', 'name', 'role', 'avatar', 'bio', 'created_at', 'is_staff', 'is_superuser']
+        read_only_fields = ['id', 'email', 'role', 'created_at', 'is_staff', 'is_superuser']
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -55,6 +55,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['name'] = user.name
         token['email'] = user.email
         token['role'] = user.role
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
         return token
 
     def validate(self, attrs):

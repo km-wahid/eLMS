@@ -1,4 +1,6 @@
 from django.urls import re_path
+from . import consumers
 
-# WebSocket consumers will be added in Phase 8
-websocket_urlpatterns = []
+websocket_urlpatterns = [
+    re_path(r"^ws/notifications/$", consumers.NotificationConsumer.as_asgi()),
+]

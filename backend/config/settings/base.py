@@ -23,6 +23,7 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'channels',
     'storages',
+    'drf_spectacular',
 ]
 
 LOCAL_APPS = [
@@ -33,6 +34,7 @@ LOCAL_APPS = [
     'assignments',
     'livestream',
     'notifications',
+    'cms',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -103,6 +105,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ─── REST Framework ───────────────────────────────────────
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -163,3 +166,27 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@elms.example.com')
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+
+# ─── API Documentation (drf-spectacular) ─────────────────
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'eLMS API',
+    'DESCRIPTION': (
+        'E-Learning Management System REST API.\n\n'
+        '**Authentication:** Use the `/api/auth/login/` endpoint to obtain a JWT access token, '
+        'then click **Authorize** and enter `Bearer <your_token>`.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'TAGS': [
+        {'name': 'auth',          'description': 'Registration, login, logout, profile'},
+        {'name': 'courses',       'description': 'Course catalogue, modules, enrollment'},
+        {'name': 'lectures',      'description': 'Video lectures and HLS streaming'},
+        {'name': 'materials',     'description': 'Course materials and file uploads'},
+        {'name': 'assignments',   'description': 'Assignments and student submissions'},
+        {'name': 'livestream',    'description': 'Live class sessions'},
+        {'name': 'notifications', 'description': 'Real-time notifications'},
+    ],
+}

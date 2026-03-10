@@ -222,13 +222,13 @@ Copy `.env.example` to `.env` and fill in all required values.
 - [x] Phase 1 – Project Scaffolding & Infrastructure
 - [x] Phase 2 – Authentication Module
 - [x] Phase 3 – Course Management (CMS)
-- [ ] Phase 4 – Video Lecture System (HLS)
-- [ ] Phase 5 – Material Sharing
-- [ ] Phase 6 – Assignment System
-- [ ] Phase 7 – Live Class Module
-- [ ] Phase 8 – Real-Time System (WebSockets)
-- [ ] Phase 9 – Background Task System (Celery)
-- [ ] Phase 10 – Deployment (DigitalOcean)
+- [x] Phase 4 – Video Lecture System (HLS)
+- [x] Phase 5 – Material Sharing
+- [x] Phase 6 – Assignment System
+- [x] Phase 7 – Live Class Module
+- [x] Phase 8 – Real-Time System (WebSockets)
+- [x] Phase 9 – Background Task System (Celery)
+- [x] Phase 10 – Deployment (DigitalOcean)
 
 ### Future Improvements
 - 🤖 AI-generated lecture summaries
