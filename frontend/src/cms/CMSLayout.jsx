@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { label: 'Dashboard',  path: '/cms' },
   { label: 'Users',      path: '/cms/users' },
   { label: 'Courses',    path: '/cms/courses' },
+  { label: 'Resources',  path: '/cms/materials' },
   { label: 'Analytics',  path: '/cms/analytics' },
   { label: 'Settings',   path: '/cms/settings' },
 ];

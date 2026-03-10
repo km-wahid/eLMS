@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import useCourseStore from '../store/courseStore';
+import api from '../services/api';
 import {
   BookOpen, Clock, Users, Star, PlayCircle, CheckCircle,
   ClipboardList, Video, Download, ChevronDown, ChevronRight,
-  Award, Globe, Wifi
+  Award, Globe, Wifi, Loader2
 } from 'lucide-react';
 
 // ─── Demo course data keyed by slug ───────────────────────
@@ -75,18 +77,51 @@ const buildFallback = (slug) => ({
 export default function CourseDetailPage() {
   const { slug } = useParams();
   const { user, isAuthenticated } = useAuthStore();
+  const { setMyEnrollments, myEnrollments } = useCourseStore();
   const navigate = useNavigate();
 
   const course = DEMO_COURSES[slug] || buildFallback(slug);
 
-  const [enrolled, setEnrolled]       = useState(false);
-  const [enrolling, setEnrolling]     = useState(false);
+  const [enrolled,    setEnrolled]    = useState(false);
+  const [enrolling,   setEnrolling]   = useState(false);
+  const [enrollError, setEnrollError] = useState(null);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(false);
   const [openModules, setOpenModules] = useState({ m1: true });
 
-  const handleEnroll = () => {
+  // ── Check real enrollment status on mount / when auth or user changes ────
+  useEffect(() => {
+    if (!isAuthenticated) { setEnrolled(false); return; }
+    setCheckingEnrollment(true);
+    api.get(`/courses/${slug}/`)
+      .then(({ data }) => {
+        setEnrolled(!!data.is_enrolled);
+      })
+      .catch(() => setEnrolled(false))
+      .finally(() => setCheckingEnrollment(false));
+  }, [slug, isAuthenticated, user?.id, user?.email]);
+
+  // ── Real enroll API call ───────────────────────────────────────────────────
+  const handleEnroll = async () => {
     if (!isAuthenticated) { navigate('/login'); return; }
     setEnrolling(true);
-    setTimeout(() => { setEnrolled(true); setEnrolling(false); }, 900);
+    setEnrollError(null);
+    try {
+      const { data } = await api.post(`/courses/${slug}/enroll/`);
+      setEnrolled(true);
+      // Refresh enrollments in store
+      api.get('/courses/enrollments/mine/').then(r => {
+        setMyEnrollments(r.data.results ?? r.data);
+      });
+    } catch (e) {
+      const msg = e.response?.data?.detail || 'Enrollment failed. Please try again.';
+      if (msg === 'Already enrolled.') {
+        setEnrolled(true); // treat as success
+      } else {
+        setEnrollError(msg);
+      }
+    } finally {
+      setEnrolling(false);
+    }
   };
 
   const toggleModule = (id) => setOpenModules(p => ({ ...p, [id]: !p[id] }));
@@ -124,7 +159,11 @@ export default function CourseDetailPage() {
               {!enrolled && <p className="absolute bottom-3 text-white text-xs z-10">Preview available</p>}
             </div>
 
-            {enrolled ? (
+            {checkingEnrollment ? (
+              <div className="flex items-center justify-center py-4 gap-2 text-gray-400 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" /> Checking enrollment…
+              </div>
+            ) : enrolled ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-green-600 font-semibold text-sm">
                   <CheckCircle className="h-5 w-5" /> You're enrolled!
@@ -150,8 +189,9 @@ export default function CourseDetailPage() {
                 </div>
                 <button onClick={handleEnroll} disabled={enrolling}
                   className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-all text-lg">
-                  {enrolling ? 'Enrolling…' : isFree ? 'Enroll for Free' : 'Buy Now'}
+                  {enrolling ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Enrolling…</> : isFree ? 'Enroll for Free' : 'Buy Now'}
                 </button>
+                {enrollError && <p className="text-red-500 text-xs text-center">{enrollError}</p>}
                 <p className="text-center text-xs text-gray-400">30-day money-back guarantee</p>
                 <div className="text-xs text-gray-500 space-y-1.5 pt-2 border-t">
                   {[`${course.duration} of content`, `${course.lectures_count} lectures`, 'Full lifetime access', 'Certificate of completion'].map(f => (

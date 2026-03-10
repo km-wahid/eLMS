@@ -5,6 +5,8 @@ import CMSLayout from './cms/CMSLayout'
 import CMSDashboard from './cms/CMSDashboard'
 import CMSUsers from './cms/CMSUsers'
 import CMSCourses from './cms/CMSCourses'
+import CMSCourseEditor from './cms/CMSCourseEditor'
+import CMSMaterials from './cms/CMSMaterials'
 import CMSAnalytics from './cms/CMSAnalytics'
 import CMSSettings from './cms/CMSSettings'
 import LoginPage from './pages/LoginPage'
@@ -86,11 +88,13 @@ function App() {
     <Router>
       <Routes>
         {/* ── CMS routes (own layout, no Navbar) ─────── */}
-        <Route path="/cms"            element={<CMSRoute><CMSDashboard /></CMSRoute>} />
-        <Route path="/cms/users"      element={<CMSRoute><CMSUsers /></CMSRoute>} />
-        <Route path="/cms/courses"    element={<CMSRoute><CMSCourses /></CMSRoute>} />
-        <Route path="/cms/analytics"  element={<CMSRoute><CMSAnalytics /></CMSRoute>} />
-        <Route path="/cms/settings"   element={<CMSRoute><CMSSettings /></CMSRoute>} />
+        <Route path="/cms"                    element={<CMSRoute><CMSDashboard /></CMSRoute>} />
+        <Route path="/cms/users"              element={<CMSRoute><CMSUsers /></CMSRoute>} />
+        <Route path="/cms/courses"            element={<CMSRoute><CMSCourses /></CMSRoute>} />
+        <Route path="/cms/courses/:slug"      element={<CMSRoute><CMSCourseEditor /></CMSRoute>} />
+        <Route path="/cms/materials"          element={<CMSRoute><CMSMaterials /></CMSRoute>} />
+        <Route path="/cms/analytics"          element={<CMSRoute><CMSAnalytics /></CMSRoute>} />
+        <Route path="/cms/settings"           element={<CMSRoute><CMSSettings /></CMSRoute>} />
 
         {/* ── Main app routes (with Navbar Layout) ───── */}
         <Route path="/*" element={

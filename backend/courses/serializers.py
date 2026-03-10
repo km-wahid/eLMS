@@ -96,13 +96,14 @@ class CourseCreateUpdateSerializer(serializers.ModelSerializer):
 class EnrollmentSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True)
     course_id = serializers.UUIDField(source='course.id', read_only=True)
+    course_slug = serializers.CharField(source='course.slug', read_only=True)
     teacher_name = serializers.CharField(source='course.teacher.name', read_only=True)
     thumbnail_url = serializers.CharField(source='course.thumbnail_url', read_only=True)
 
     class Meta:
         model = Enrollment
         fields = [
-            'id', 'course_id', 'course_title', 'teacher_name',
+            'id', 'course_id', 'course_slug', 'course_title', 'teacher_name',
             'thumbnail_url', 'status', 'progress', 'enrolled_at', 'completed_at',
         ]
         read_only_fields = ['id', 'enrolled_at', 'completed_at']

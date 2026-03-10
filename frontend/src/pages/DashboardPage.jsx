@@ -1,15 +1,20 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import api from '../services/api';
 import {
   BookOpen, PlayCircle, ClipboardList, Video,
   TrendingUp, Clock, CheckCircle, Star, Bell, Users, Award
 } from 'lucide-react';
 
-// ─── Demo data ────────────────────────────────────────────
-const DEMO_ENROLLED = [
-  { id: 1, slug: 'python-for-beginners',    title: 'Python for Beginners',       progress: 68, color: 'from-indigo-500 to-purple-600', lastLesson: 'Functions & Modules' },
-  { id: 2, slug: 'web-dev-bootcamp',        title: 'Full-Stack Web Development', progress: 34, color: 'from-blue-500 to-cyan-600',    lastLesson: 'React Hooks Deep Dive' },
-  { id: 3, slug: 'data-science-essentials', title: 'Data Science Essentials',    progress: 12, color: 'from-emerald-500 to-teal-600', lastLesson: 'NumPy Basics' },
+// Gradient palette for course cards (cycles by index)
+const CARD_COLORS = [
+  'from-indigo-500 to-purple-600',
+  'from-blue-500 to-cyan-600',
+  'from-emerald-500 to-teal-600',
+  'from-orange-500 to-red-500',
+  'from-pink-500 to-rose-600',
+  'from-violet-500 to-indigo-600',
 ];
 
 const DEMO_ASSIGNMENTS = [
@@ -69,9 +74,26 @@ function ProgressBar({ pct }) {
 
 // ─── main component ───────────────────────────────────────
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
   const name = user?.first_name || user?.name || user?.email?.split('@')[0] || 'there';
+
+  // Real per-user enrollments
+  const [enrollments, setEnrollments] = useState([]);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) { setEnrollments([]); return; }
+    setEnrollments([]); // immediately clear to prevent stale flash
+    setLoadingEnrollments(true);
+    api.get('/courses/enrollments/mine/')
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : (data.results ?? []);
+        setEnrollments(list);
+      })
+      .catch(() => setEnrollments([]))
+      .finally(() => setLoadingEnrollments(false));
+  }, [isAuthenticated, user?.id, user?.email]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -89,10 +111,10 @@ export default function DashboardPage() {
           {!isTeacher && (
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: 'Enrolled',   value: '3',   icon: BookOpen,      color: 'bg-white/20' },
-                { label: 'Completed',  value: '1',   icon: CheckCircle,   color: 'bg-white/20' },
-                { label: 'Pending',    value: '2',   icon: ClipboardList, color: 'bg-white/20' },
-                { label: 'Live Today', value: '1',   icon: Video,         color: 'bg-white/20' },
+                { label: 'Enrolled',   value: enrollments.length,                                                      icon: BookOpen,      color: 'bg-white/20' },
+                { label: 'Completed',  value: enrollments.filter(e => e.progress >= 100).length,                        icon: CheckCircle,   color: 'bg-white/20' },
+                { label: 'In Progress',value: enrollments.filter(e => e.progress > 0 && e.progress < 100).length,      icon: ClipboardList, color: 'bg-white/20' },
+                { label: 'Live Today', value: DEMO_LIVE.filter(l => l.status === 'live').length,                        icon: Video,         color: 'bg-white/20' },
               ].map(s => (
                 <div key={s.label} className="bg-white/10 backdrop-blur rounded-xl px-4 py-3 flex items-center gap-3">
                   <s.icon className="h-5 w-5 text-white/70" />
@@ -116,27 +138,43 @@ export default function DashboardPage() {
               <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Continue Learning</h2>
               <Link to="/my-learning" className="text-sm text-indigo-600 hover:underline">View all →</Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {DEMO_ENROLLED.map(c => (
-                <div key={c.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                  <div className={`h-24 bg-gradient-to-br ${c.color} flex items-center justify-center`}>
-                    <PlayCircle className="h-10 w-10 text-white/80" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 line-clamp-1">{c.title}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5 mb-3 line-clamp-1">Next: {c.lastLesson}</p>
-                    <ProgressBar pct={c.progress} />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-400">{c.progress}% complete</span>
-                      <Link to={`/courses/${c.slug}/learn`}
-                        className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                        Resume →
-                      </Link>
+            {loadingEnrollments ? (
+              <div className="text-center py-10 text-gray-400 text-sm">Loading your courses…</div>
+            ) : enrollments.length === 0 ? (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-8 text-center">
+                <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">You haven't enrolled in any courses yet.</p>
+                <Link to="/courses" className="mt-4 inline-block text-sm px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                  Browse Courses →
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {enrollments.slice(0, 3).map((e, idx) => {
+                  const progress = e.progress ?? 0;
+                  const color = CARD_COLORS[idx % CARD_COLORS.length];
+                  return (
+                    <div key={e.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                      <div className={`h-24 bg-gradient-to-br ${color} flex items-center justify-center`}>
+                        <PlayCircle className="h-10 w-10 text-white/80" />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 line-clamp-1">{e.course_title}</h3>
+                        <p className="text-xs text-gray-400 mt-0.5 mb-3 line-clamp-1">Course enrolled</p>
+                        <ProgressBar pct={progress} />
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs text-gray-400">{progress}% complete</span>
+                          <Link to={`/courses/${e.course_slug}/learn`}
+                            className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                            Resume →
+                          </Link>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 

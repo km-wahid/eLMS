@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Panel, JsonBlock, MethodBadge, Btn } from './CMSLayout';
-import { Loader2, RefreshCw, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Loader2, RefreshCw, ChevronDown, ChevronUp, X, Plus, Pencil, Settings } from 'lucide-react';
 
 function CourseRow({ c, onToggle, onDelete }) {
   const [open, setOpen] = useState(false);
@@ -32,8 +32,11 @@ function CourseRow({ c, onToggle, onDelete }) {
             <Btn variant={c.is_published ? 'warning' : 'success'} size="sm" onClick={() => onToggle(c)}>
               {c.is_published ? 'Unpublish' : 'Publish'}
             </Btn>
-            <Link to={`/courses/${c.slug}`}>
-              <Btn variant="info" size="sm">View</Btn>
+            <Link to={`/cms/courses/${c.slug}`}>
+              <Btn variant="info" size="sm"><Settings className="h-3 w-3 inline mr-1" />Manage</Btn>
+            </Link>
+            <Link to={`/courses/${c.slug}`} target="_blank">
+              <Btn variant="default" size="sm">Preview</Btn>
             </Link>
             <Btn variant="danger" size="sm" onClick={() => onDelete(c)}>Delete</Btn>
           </div>
@@ -52,14 +55,23 @@ function CourseRow({ c, onToggle, onDelete }) {
   );
 }
 
+const EMPTY_FORM = { title:'', description:'', level:'beginner', price:'0.00', is_published:false, thumbnail_url:'' };
+
 export default function CMSCourses() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoad]   = useState(true);
-  const [search,  setSearch] = useState('');
-  const [filter,  setFilter] = useState('');
-  const [delC,    setDelC]   = useState(null);
-  const [toast,   setToast]  = useState(null);
-  const [raw,     setRaw]    = useState(false);
+  const navigate = useNavigate();
+  const [courses,    setCourses]    = useState([]);
+  const [loading,    setLoad]       = useState(true);
+  const [search,     setSearch]     = useState('');
+  const [filter,     setFilter]     = useState('');
+  const [delC,       setDelC]       = useState(null);
+  const [toast,      setToast]      = useState(null);
+  const [raw,        setRaw]        = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating,   setCreating]   = useState(false);
+  const [teachers,   setTeachers]   = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [createForm, setCreateForm] = useState({...EMPTY_FORM, teacher_id:'', category_id:''});
+  const thumbRef = useRef();
 
   const toast$ = (msg, ok=true) => { setToast({msg,ok}); setTimeout(()=>setToast(null),3500); };
 
@@ -72,6 +84,32 @@ export default function CMSCourses() {
   }, [search]);
 
   useEffect(() => { const t=setTimeout(load,300); return ()=>clearTimeout(t); }, [load]);
+
+  const openCreate = () => {
+    Promise.all([api.get('/cms/teachers/'), api.get('/cms/categories/')]).then(([tr, cr]) => {
+      setTeachers(tr.data.results ?? tr.data);
+      setCategories(cr.data.results ?? cr.data);
+    });
+    setCreateForm({...EMPTY_FORM, teacher_id:'', category_id:''});
+    setShowCreate(true);
+  };
+
+  const doCreate = async () => {
+    if (!createForm.title) { toast$('Title required', false); return; }
+    setCreating(true);
+    try {
+      const fd = new FormData();
+      Object.entries(createForm).forEach(([k,v]) => { if (v !== '' && v !== null && v !== undefined) fd.append(k, v); });
+      if (thumbRef.current?.files[0]) fd.append('thumbnail', thumbRef.current.files[0]);
+      const { data } = await api.post('/cms/courses/create/', fd, { headers:{'Content-Type':'multipart/form-data'} });
+      setShowCreate(false);
+      toast$(`Course "${data.title}" created`);
+      navigate(`/cms/courses/${data.slug}`);
+    } catch (e) {
+      toast$(e.response?.data?.detail || JSON.stringify(e.response?.data) || 'Create failed', false);
+    }
+    setCreating(false);
+  };
 
   const displayed = courses.filter(c => {
     if (filter==='published')   return c.is_published;
@@ -131,7 +169,7 @@ export default function CMSCourses() {
           </div>
           <div className="flex gap-2">
             <Btn variant="default" onClick={() => setRaw(r=>!r)}>{raw ? 'Table' : 'JSON'}</Btn>
-            <Link to="/courses/new"><Btn variant="success">+ Create Course</Btn></Link>
+            <Btn variant="success" onClick={openCreate}>+ Create Course</Btn>
             <Btn variant="default" onClick={load} disabled={loading}>
               {loading ? <Loader2 className="h-3 w-3 animate-spin inline" /> : <RefreshCw className="h-3 w-3 inline" />}{' '}Refresh
             </Btn>
@@ -210,6 +248,87 @@ export default function CMSCourses() {
               <div className="flex gap-3">
                 <Btn variant="default" onClick={()=>setDelC(null)}>Cancel</Btn>
                 <Btn variant="danger"  onClick={doDelete}>DELETE</Btn>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create course modal */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-300 rounded shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#49cc90] border-b border-[#3ab57a] px-4 py-2.5 flex items-center justify-between sticky top-0">
+              <span className="font-semibold text-sm text-white font-mono">POST /api/cms/courses/create/</span>
+              <button onClick={() => setShowCreate(false)} className="text-white/80 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div>
+                <label className="text-xs font-mono text-gray-600 block mb-1">title *</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-[#337ab7]"
+                  value={createForm.title} onChange={e => setCreateForm(f => ({...f,title:e.target.value}))} />
+              </div>
+              <div>
+                <label className="text-xs font-mono text-gray-600 block mb-1">description *</label>
+                <textarea rows={3} className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-[#337ab7] resize-none"
+                  value={createForm.description} onChange={e => setCreateForm(f => ({...f,description:e.target.value}))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-mono text-gray-600 block mb-1">teacher_id</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
+                    value={createForm.teacher_id} onChange={e => setCreateForm(f => ({...f,teacher_id:e.target.value}))}>
+                    <option value="">— current user —</option>
+                    {teachers.map(t => <option key={t.id} value={t.id}>{t.name} ({t.email})</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-gray-600 block mb-1">category_id</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
+                    value={createForm.category_id} onChange={e => setCreateForm(f => ({...f,category_id:e.target.value}))}>
+                    <option value="">— none —</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-gray-600 block mb-1">level</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
+                    value={createForm.level} onChange={e => setCreateForm(f => ({...f,level:e.target.value}))}>
+                    {['beginner','intermediate','advanced'].map(l => <option key={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-gray-600 block mb-1">price</label>
+                  <input type="number" step="0.01" min="0"
+                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-[#337ab7]"
+                    value={createForm.price} onChange={e => setCreateForm(f => ({...f,price:e.target.value}))} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-mono text-gray-600 block mb-1">is_published</label>
+                <select className="border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
+                  value={String(createForm.is_published)} onChange={e => setCreateForm(f => ({...f,is_published:e.target.value==='true'}))}>
+                  <option value="false">false</option>
+                  <option value="true">true</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-mono text-gray-600 block mb-1">thumbnail (file)</label>
+                <input ref={thumbRef} type="file" accept="image/*"
+                  className="block text-sm font-mono text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border file:border-gray-300 file:text-xs file:font-mono file:bg-gray-50 hover:file:bg-gray-100 w-full" />
+              </div>
+              <div>
+                <label className="text-xs font-mono text-gray-600 block mb-1">thumbnail_url (external)</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-[#337ab7]"
+                  placeholder="https://…" value={createForm.thumbnail_url}
+                  onChange={e => setCreateForm(f => ({...f,thumbnail_url:e.target.value}))} />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <Btn variant="success" onClick={doCreate} disabled={creating}>
+                  {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin inline mr-1" /> : null}
+                  POST / Create Course
+                </Btn>
+                <Btn variant="default" onClick={() => setShowCreate(false)}>Cancel</Btn>
               </div>
             </div>
           </div>
