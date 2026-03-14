@@ -13,9 +13,6 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
-import CoursesPage from './pages/CoursesPage'
-import CourseDetailPage from './pages/CourseDetailPage'
-import CourseFormPage from './pages/CourseFormPage'
 import MyCoursesPage from './pages/MyCoursesPage'
 import MyEnrollmentsPage from './pages/MyEnrollmentsPage'
 import LecturePage from './pages/LecturePage'
@@ -49,8 +46,8 @@ function Home() {
           Access video lectures, live classes, assignments and more — all in one place.
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Link to="/courses" className="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
-            Browse Courses
+          <Link to="/departments" className="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+            Browse Departments
           </Link>
           {isAuthenticated ? (
             <Link to="/dashboard" className="px-8 py-3 bg-white border-2 border-indigo-200 text-indigo-700 font-semibold rounded-xl hover:border-indigo-400 transition-all">
@@ -134,8 +131,6 @@ function App() {
               <Route path="/departments/:slug" element={<DepartmentDetailPage />} />
                <Route path="/semesters/:slug" element={<SemesterCoursesPage />} />
                <Route path="/academic-courses/:slug" element={<CourseDetailAcademicPage />} />
-              <Route path="/courses"       element={<CoursesPage />} />
-              <Route path="/courses/:slug" element={<CourseDetailPage />} />
               <Route path="*"              element={<Navigate to="/" replace />} />
             </Routes>
           </Layout>
