@@ -28,6 +28,9 @@ export default function Navbar() {
 
         {/* Centre nav */}
         <div className="hidden md:flex items-center gap-6 text-sm">
+          <Link to="/departments" className={active('/departments')}>
+            <span className="flex items-center gap-1"><BookOpen className="h-4 w-4" />Departments</span>
+          </Link>
           <Link to="/courses" className={active('/courses')}>
             <span className="flex items-center gap-1"><BookOpen className="h-4 w-4" />Courses</span>
           </Link>

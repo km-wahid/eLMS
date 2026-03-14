@@ -13,6 +13,7 @@ urlpatterns = [
 
     # ── API apps ──────────────────────────────────────────
     path('api/auth/',          include('accounts.urls')),
+    path('api/academics/',     include('academics.urls')),
     path('api/courses/',       include('courses.urls')),
     path('api/lectures/',      include('lectures.urls')),
     path('api/materials/',     include('materials.urls')),

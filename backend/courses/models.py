@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from django.db.models import Q
 
 
 class Category(models.Model):
@@ -38,6 +39,26 @@ class Course(models.Model):
         blank=True,
         related_name='courses',
     )
+    # Academic structure links (optional for backward compatibility)
+    department = models.ForeignKey(
+        'academics.Department',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='courses'
+    )
+    semester = models.ForeignKey(
+        'academics.Semester',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='courses'
+    )
+    course_code = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text='e.g., CS101, ENG201'
+    )
     thumbnail = models.ImageField(upload_to='course_thumbnails/', null=True, blank=True)
     thumbnail_url = models.URLField(blank=True)  # for external storage URL
     level = models.CharField(max_length=15, choices=Level.choices, default=Level.BEGINNER)
@@ -49,6 +70,10 @@ class Course(models.Model):
     class Meta:
         db_table = 'courses'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['department', 'semester']),
+            models.Index(fields=['teacher']),
+        ]
 
     def __str__(self):
         return self.title

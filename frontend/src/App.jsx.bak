@@ -30,9 +30,6 @@ import ProgressPage from './pages/ProgressPage'
 import DepartmentDetailPage from './pages/DepartmentDetailPage'
 import SemesterCoursesPage from './pages/SemesterCoursesPage'
 import CourseDetailAcademicPage from './pages/CourseDetailAcademicPage'
-import TeacherAcademicDashboard from './pages/TeacherAcademicDashboard'
-import TeacherCourseEditor from './pages/TeacherCourseEditor'
-import TeacherAnalyticsPage from './pages/TeacherAnalyticsPage'
 
 function Home() {
   const { isAuthenticated } = useAuthStore()
@@ -116,9 +113,6 @@ function App() {
               <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/my-courses"  element={<ProtectedRoute><MyCoursesPage /></ProtectedRoute>} />
               <Route path="/my-learning" element={<ProtectedRoute><MyEnrollmentsPage /></ProtectedRoute>} />
-               <Route path="/teacher/academic" element={<ProtectedRoute><TeacherAcademicDashboard /></ProtectedRoute>} />
-               <Route path="/teacher/courses/:courseId/edit" element={<ProtectedRoute><TeacherCourseEditor /></ProtectedRoute>} />
-               <Route path="/teacher/courses/:courseId/analytics" element={<ProtectedRoute><TeacherAnalyticsPage /></ProtectedRoute>} />
               <Route path="/courses/new"        element={<ProtectedRoute><CourseFormPage /></ProtectedRoute>} />
               <Route path="/courses/:slug/edit" element={<ProtectedRoute><CourseFormPage /></ProtectedRoute>} />
               <Route path="/courses/:slug/learn"            element={<ProtectedRoute><LecturePage /></ProtectedRoute>} />
@@ -132,8 +126,6 @@ function App() {
               <Route path="/progress"       element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
               <Route path="/departments"   element={<DepartmentsPage />} />
               <Route path="/departments/:slug" element={<DepartmentDetailPage />} />
-               <Route path="/semesters/:slug" element={<SemesterCoursesPage />} />
-               <Route path="/academic-courses/:slug" element={<CourseDetailAcademicPage />} />
               <Route path="/courses"       element={<CoursesPage />} />
               <Route path="/courses/:slug" element={<CourseDetailPage />} />
               <Route path="*"              element={<Navigate to="/" replace />} />
