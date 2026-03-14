@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
 
 export default function CourseFormPage() {
   const { slug } = useParams(); // if slug → edit mode
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
   const isEdit = Boolean(slug);
+  
+  // Get semester info from navigation state if creating from semester page
+  const semesterState = location.state || {};
 
   const [form, setForm] = useState({
     title: '',
@@ -17,13 +21,20 @@ export default function CourseFormPage() {
     thumbnail_url: '',
     category_id: '',
     is_published: false,
+    department: semesterState.departmentId || '',
+    semester: semesterState.semesterId || '',
   });
+  const [departments, setDepartments] = useState([]);
+  const [semesters, setSemesters] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Fetch departments
+    api.get('/academics/departments/').then(r => setDepartments(r.data.results || r.data)).catch(() => {});
     api.get('/courses/categories/').then(r => setCategories(r.data)).catch(() => {});
+    
     if (isEdit) {
       api.get(`/courses/${slug}/`).then(r => {
         const c = r.data;
@@ -35,10 +46,23 @@ export default function CourseFormPage() {
           thumbnail_url: c.thumbnail_url || '',
           category_id: c.category?.id || '',
           is_published: c.is_published,
+          department: c.department?.id || '',
+          semester: c.semester?.id || '',
         });
       }).catch(() => setError('Failed to load course.'));
     }
   }, [slug]);
+
+  // Fetch semesters when department changes
+  useEffect(() => {
+    if (form.department) {
+      api.get('/academics/semesters/', { params: { department: form.department } })
+        .then(r => setSemesters(r.data.results || r.data))
+        .catch(() => setSemesters([]));
+    } else {
+      setSemesters([]);
+    }
+  }, [form.department]);
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target;
@@ -52,6 +76,9 @@ export default function CourseFormPage() {
     try {
       const payload = { ...form };
       if (!payload.category_id) delete payload.category_id;
+      if (!payload.department) delete payload.department;
+      if (!payload.semester) delete payload.semester;
+      
       if (isEdit) {
         await api.patch(`/courses/${slug}/update/`, payload);
         navigate(`/courses/${slug}`);
@@ -85,6 +112,23 @@ export default function CourseFormPage() {
         {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg p-3 mb-4">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <select name="department" value={form.department} onChange={handleChange} className="input">
+                <option value="">— Select Department —</option>
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+              <select name="semester" value={form.semester} onChange={handleChange} disabled={!form.department} className="input disabled:bg-gray-100">
+                <option value="">— Select Semester —</option>
+                {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Course Title *</label>
             <input name="title" value={form.title} onChange={handleChange} required className="input" placeholder="e.g. Introduction to Python" />

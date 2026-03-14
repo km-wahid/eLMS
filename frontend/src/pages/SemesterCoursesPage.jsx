@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { useSemesterStore } from '../store/semesterStore';
 import useCourseStore from '../store/courseStore';
 import { useAuthStore } from '../store/authStore';
@@ -10,12 +10,14 @@ import Layout from '../components/layout/Layout';
 export default function SemesterCoursesPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const { fetchSemesterBySlug, selectedSemester, loading: semLoading } = useSemesterStore();
   const { courses, loading: coursesLoading } = useCourseStore();
   const [enrolledCourseIds, setEnrolledCourseIds] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 9;
+  
+  const isTeacher = user?.role === 'teacher' || user?.is_staff;
 
   useEffect(() => {
     fetchSemesterBySlug(slug);
@@ -54,11 +56,23 @@ export default function SemesterCoursesPage() {
           {/* Header */}
           {selectedSemester && (
             <div className="mb-8">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-bold text-gray-900">{selectedSemester.name}</h1>
-                <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold">
-                  {selectedSemester.type === 'semester' ? '📚 Semester' : '⏱️ Trimester'} {selectedSemester.order}
-                </span>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-4xl font-bold text-gray-900">{selectedSemester.name}</h1>
+                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold">
+                      {selectedSemester.type === 'semester' ? '📚 Semester' : '⏱️ Trimester'} {selectedSemester.order}
+                    </span>
+                  </div>
+                </div>
+                {isTeacher && (
+                  <button
+                    onClick={() => navigate('/courses/new', { state: { semesterId: selectedSemester.id, semesterSlug: slug } })}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                  >
+                    <Plus size={20} /> Create Course
+                  </button>
+                )}
               </div>
               <p className="text-gray-600 mb-4">{selectedSemester.description || 'Available courses for this semester'}</p>
               {selectedSemester.start_date && (
