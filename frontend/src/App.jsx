@@ -30,6 +30,7 @@ import CourseDetailAcademicPage from './pages/CourseDetailAcademicPage'
 import TeacherAcademicDashboard from './pages/TeacherAcademicDashboard'
 import TeacherCourseEditor from './pages/TeacherCourseEditor'
 import TeacherAnalyticsPage from './pages/TeacherAnalyticsPage'
+import CourseFormPage from './pages/CourseFormPage'
 
 function Home() {
   const { isAuthenticated } = useAuthStore()
