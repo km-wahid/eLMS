@@ -15,9 +15,8 @@ export default function CourseFormPage() {
 
   const [form, setForm] = useState({
     title: '',
+    course_code: '',
     description: '',
-    level: 'beginner',
-    price: '0.00',
     thumbnail_url: '',
     category_id: '',
     is_published: false,
@@ -28,30 +27,33 @@ export default function CourseFormPage() {
   const [semesters, setSemesters] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     // Fetch departments
     api.get('/academics/departments/').then(r => setDepartments(r.data.results || r.data)).catch(() => {});
-    api.get('/courses/categories/').then(r => setCategories(r.data)).catch(() => {});
+    api.get('/courses/categories/').then(r => setCategories(r.data.results || r.data)).catch(() => {});
     
     if (isEdit) {
       api.get(`/courses/${slug}/`).then(r => {
         const c = r.data;
         setForm({
           title: c.title,
+          course_code: c.course_code || '',
           description: c.description,
-          level: c.level,
-          price: c.price,
           thumbnail_url: c.thumbnail_url || '',
           category_id: c.category?.id || '',
           is_published: c.is_published,
           department: c.department?.id || '',
           semester: c.semester?.id || '',
         });
-      }).catch(() => setError('Failed to load course.'));
+      }).catch(() => setError('Failed to load course.'))
+      .finally(() => setPageLoading(false));
+    } else {
+      setPageLoading(false);
     }
-  }, [slug]);
+  }, [slug, isEdit]);
 
   // Fetch semesters when department changes
   useEffect(() => {
@@ -74,16 +76,24 @@ export default function CourseFormPage() {
     setLoading(true);
     setError('');
     try {
-      const payload = { ...form };
-      if (!payload.category_id) delete payload.category_id;
-      if (!payload.department) delete payload.department;
-      if (!payload.semester) delete payload.semester;
+      const payload = {
+        title: form.title,
+        course_code: form.course_code,
+        description: form.description,
+        thumbnail_url: form.thumbnail_url,
+        is_published: form.is_published,
+      };
+      
+      // Add optional fields
+      if (form.category_id) payload.category_id = form.category_id;
+      if (form.department) payload.department_id = form.department;
+      if (form.semester) payload.semester_id = form.semester;
       
       if (isEdit) {
-        await api.patch(`/courses/${slug}/update/`, payload);
+        await api.patch(`/courses/courses/${slug}/update/`, payload);
         navigate(`/courses/${slug}`);
       } else {
-        const res = await api.post('/courses/create/', payload);
+        const res = await api.post('/courses/courses/create/', payload);
         navigate(`/courses/${res.data.slug}`);
       }
     } catch (err) {
@@ -99,12 +109,32 @@ export default function CourseFormPage() {
   };
 
   if (user && user.role === 'student') {
-    return <div className="text-center py-20 text-red-600">Students cannot create courses.</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center py-20">
+          <p className="text-red-600 text-lg">Students cannot create courses.</p>
+          <button onClick={() => navigate('/my-learning')} className="mt-4 btn btn-primary">
+            Go to My Learning
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center py-12 px-4">
-      <div className="card w-full max-w-2xl">
+      <div className="card w-full max-w-2xl p-6 md:p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">
           {isEdit ? 'Edit Course' : 'Create New Course'}
         </h1>
@@ -135,23 +165,14 @@ export default function CourseFormPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-            <textarea name="description" value={form.description} onChange={handleChange} required className="input h-32 resize-none" placeholder="What will students learn?" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Course Code *</label>
+            <input name="course_code" value={form.course_code} onChange={handleChange} required className="input" placeholder="e.g. CS101, BBA201, ENG301" />
+            <p className="text-xs text-gray-500 mt-1">Unique identifier for this course</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
-              <select name="level" value={form.level} onChange={handleChange} className="input">
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-              <input name="price" type="number" min="0" step="0.01" value={form.price} onChange={handleChange} className="input" />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <textarea name="description" value={form.description} onChange={handleChange} required className="input h-32 resize-none" placeholder="What will students learn?" />
           </div>
 
           <div>

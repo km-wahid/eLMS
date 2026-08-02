@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, BookOpen, Plus } from 'lucide-react';
 import { useSemesterStore } from '../store/semesterStore';
 import useCourseStore from '../store/courseStore';
 import { useAuthStore } from '../store/authStore';
 import CourseCard from '../components/academics/CourseCard';
 import Layout from '../components/layout/Layout';
+import { departmentCover } from '../utils/departmentCovers';
 
 export default function SemesterCoursesPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
   const { fetchSemesterBySlug, selectedSemester, loading: semLoading } = useSemesterStore();
-  const { courses, loading: coursesLoading } = useCourseStore();
+  const { courses, fetchCourses, loading: coursesLoading } = useCourseStore();
   const [enrolledCourseIds, setEnrolledCourseIds] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 9;
@@ -23,27 +24,36 @@ export default function SemesterCoursesPage() {
     fetchSemesterBySlug(slug);
   }, [slug]);
 
+  useEffect(() => {
+    // Fetch all published courses
+    fetchCourses({ semester: slug });
+  }, [slug, fetchCourses]);
+
   // Filter courses for this semester
-  const semesterCourses = courses.filter((c) => c.semester?.slug === slug) || [];
+  const semesterCourses = courses || [];
   const totalPages = Math.ceil(semesterCourses.length / coursesPerPage);
   const startIdx = (currentPage - 1) * coursesPerPage;
   const paginatedCourses = semesterCourses.slice(startIdx, startIdx + coursesPerPage);
 
   const handleEnroll = async (courseId) => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: location.pathname } });
+      const pending = courses.find((item) => item.id === courseId);
+      navigate('/login', { state: { intent: 'enroll', courseSlug: pending?.slug, courseTitle: pending?.title, returnTo: `/semesters/${slug}` } });
       return;
     }
-    // Would call enrollmentService.enrollCourse(courseId)
+    const course = courses.find((item) => item.id === courseId);
+    if (!course || course.availability !== 'available') return;
+    await useCourseStore.getState().enrollCourse(course.slug);
     setEnrolledCourseIds((prev) => new Set([...prev, courseId]));
+    navigate(`/learn/${course.slug}`);
   };
 
   const loading = semLoading || coursesLoading;
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="min-h-[calc(100vh-3.5rem)] bg-[#f6f7fb] py-8 sm:py-12">
+        <div className="page-shell max-w-6xl">
           {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
@@ -55,31 +65,20 @@ export default function SemesterCoursesPage() {
 
           {/* Header */}
           {selectedSemester && (
-            <div className="mb-8">
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-4xl font-bold text-gray-900">{selectedSemester.name}</h1>
-                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold">
-                      {selectedSemester.type === 'semester' ? '📚 Semester' : '⏱️ Trimester'} {selectedSemester.order}
-                    </span>
-                  </div>
-                </div>
+            <div className="relative mb-9 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-lg">
+              <img src={departmentCover(selectedSemester.department_code || courses?.[0]?.department_code)} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/30" />
+              <div className="relative flex items-end justify-between gap-6 p-7 sm:p-10">
+                <div className="max-w-3xl"><p className="eyebrow !text-indigo-300">{selectedSemester.department_name} • {selectedSemester.type} {selectedSemester.order}</p><h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{selectedSemester.name}</h1><p className="mt-4 max-w-2xl leading-7 text-slate-300">{selectedSemester.description || 'Build your knowledge through a focused collection of lectures, practical work, and assessments.'}</p><div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold"><BookOpen size={16} />{selectedSemester.course_count} courses in this semester</div></div>
                 {isTeacher && (
                   <button
                     onClick={() => navigate('/courses/new', { state: { semesterId: selectedSemester.id, semesterSlug: slug } })}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                    className="btn shrink-0 bg-white text-slate-950 hover:bg-indigo-50"
                   >
                     <Plus size={20} /> Create Course
                   </button>
                 )}
               </div>
-              <p className="text-gray-600 mb-4">{selectedSemester.description || 'Available courses for this semester'}</p>
-              {selectedSemester.start_date && (
-                <p className="text-sm text-gray-500">
-                  📅 {new Date(selectedSemester.start_date).toLocaleDateString()} - {new Date(selectedSemester.end_date).toLocaleDateString()}
-                </p>
-              )}
             </div>
           )}
 
@@ -93,14 +92,14 @@ export default function SemesterCoursesPage() {
           {/* Courses Grid */}
           {!loading && paginatedCourses.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <div className="mb-6"><p className="eyebrow">Course catalog</p><h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Learn this semester</h2></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {paginatedCourses.map((course) => (
                   <CourseCard
                     key={course.id}
                     course={course}
                     isEnrolled={enrolledCourseIds.has(course.id)}
                     onEnroll={handleEnroll}
-                    onClick={() => navigate(`/courses/${course.slug}`)}
+                    onClick={() => navigate(course.availability === 'available' ? `/academic-courses/${course.slug}` : `/academic-courses/${course.slug}`)}
                   />
                 ))}
               </div>
@@ -142,7 +141,7 @@ export default function SemesterCoursesPage() {
             </>
           ) : (
             !loading && (
-              <div className="text-center py-12 bg-white rounded-lg">
+              <div className="surface text-center py-16">
                 <p className="text-gray-500 text-lg">
                   {selectedSemester
                     ? `No courses available for ${selectedSemester.name}`

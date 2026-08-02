@@ -95,7 +95,7 @@ class LiveChatConsumer(AsyncWebsocketConsumer):
             from livestream.models import LiveSession
             from courses.models import Enrollment
             session = LiveSession.objects.select_related('course').get(id=session_id)
-            if session.course.instructor == user:
+            if session.course.can_manage(user):
                 return True
             return Enrollment.objects.filter(course=session.course, student=user).exists()
         except Exception:

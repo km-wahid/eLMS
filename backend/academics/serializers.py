@@ -13,7 +13,21 @@ class DepartmentSerializer(serializers.ModelSerializer):
             'logo', 'logo_url', 'semester_count', 'course_count',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'semester_count', 'course_count', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'slug', 'semester_count', 'course_count', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        # Auto-generate slug from name if not provided
+        from django.utils.text import slugify
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Auto-generate slug from name if name is being updated
+        from django.utils.text import slugify
+        if 'name' in validated_data and 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().update(instance, validated_data)
 
     def get_semester_count(self, obj):
         return obj.semesters.count()
@@ -26,15 +40,30 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class SemesterSerializer(serializers.ModelSerializer):
     course_count = serializers.SerializerMethodField()
     department_name = serializers.CharField(source='department.name', read_only=True)
+    department_code = serializers.CharField(source='department.code', read_only=True)
 
     class Meta:
         model = Semester
         fields = [
-            'id', 'department', 'department_name', 'name', 'slug', 'type',
+            'id', 'department', 'department_name', 'department_code', 'name', 'slug', 'type',
             'order', 'start_date', 'end_date', 'description',
             'course_count', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'department_name', 'course_count', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'slug', 'department_name', 'department_code', 'course_count', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        # Auto-generate slug from name if not provided
+        from django.utils.text import slugify
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Auto-generate slug from name if name is being updated
+        from django.utils.text import slugify
+        if 'name' in validated_data and 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().update(instance, validated_data)
 
     def get_course_count(self, obj):
         return obj.courses.count()
@@ -49,7 +78,7 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
-            'id', 'user', 'user_name', 'user_avatar', 'lecture', 'parent',
+            'id', 'user', 'user_name', 'user_avatar', 'lecture', 'content_item', 'parent',
             'content', 'upvotes', 'pinned', 'is_resolved',
             'replies', 'reply_count', 'created_at', 'updated_at'
         ]
@@ -72,12 +101,14 @@ class CommentSerializer(serializers.ModelSerializer):
 class BookmarkSerializer(serializers.ModelSerializer):
     lecture_title = serializers.CharField(source='lecture.title', read_only=True, allow_null=True)
     material_title = serializers.CharField(source='material.title', read_only=True, allow_null=True)
+    content_item_title = serializers.CharField(source='content_item.title', read_only=True, allow_null=True)
     content_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Bookmark
         fields = [
             'id', 'user', 'lecture', 'lecture_title', 'material', 'material_title',
+            'content_item', 'content_item_title',
             'content_type', 'created_at'
         ]
         read_only_fields = ['id', 'user', 'created_at']
@@ -87,7 +118,22 @@ class BookmarkSerializer(serializers.ModelSerializer):
             return 'lecture'
         if obj.material:
             return 'material'
+        if obj.content_item:
+            return obj.content_item.content_type
         return None
+
+    def validate(self, attrs):
+        content_item = attrs.get('content_item')
+        request = self.context.get('request')
+        if content_item and request and request.user.role == 'student':
+            from courses.models import Enrollment
+            if not Enrollment.objects.filter(
+                student=request.user,
+                course=content_item.module.course,
+                status=Enrollment.Status.ACTIVE,
+            ).exists():
+                raise serializers.ValidationError('Enroll in the course before bookmarking its content.')
+        return attrs
 
 
 class ProgressTrackingSerializer(serializers.ModelSerializer):

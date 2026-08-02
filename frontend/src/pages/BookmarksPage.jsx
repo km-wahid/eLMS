@@ -17,7 +17,8 @@ export default function BookmarksPage() {
 
   const lectureBookmarks = bookmarks?.filter((b) => b.lecture) || [];
   const materialBookmarks = bookmarks?.filter((b) => b.material) || [];
-  const displayBookmarks = filter === 'lectures' ? lectureBookmarks : filter === 'materials' ? materialBookmarks : bookmarks;
+  const contentBookmarks = bookmarks?.filter((b) => b.content_item) || [];
+  const displayBookmarks = filter === 'lectures' ? lectureBookmarks : filter === 'materials' ? materialBookmarks : filter === 'content' ? contentBookmarks : bookmarks;
 
   const handleRemove = async (bookmarkId) => {
     if (window.confirm('Remove this bookmark?')) {
@@ -50,7 +51,7 @@ export default function BookmarksPage() {
 
           {/* Filters */}
           <div className="flex gap-2 mb-8">
-            {['All', 'Lectures', 'Materials'].map((tab) => (
+            {['All', 'Content', 'Lectures', 'Materials'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFilter(tab.toLowerCase())}
@@ -63,6 +64,7 @@ export default function BookmarksPage() {
                 {tab} {tab === 'All' && `(${bookmarks?.length || 0})`}
                 {tab === 'Lectures' && `(${lectureBookmarks.length})`}
                 {tab === 'Materials' && `(${materialBookmarks.length})`}
+                {tab === 'Content' && `(${contentBookmarks.length})`}
               </button>
             ))}
           </div>
@@ -84,7 +86,7 @@ export default function BookmarksPage() {
                 >
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">
-                      {bookmark.lecture_title || bookmark.material_title}
+                      {bookmark.content_item_title || bookmark.lecture_title || bookmark.material_title}
                     </p>
                     <p className="text-sm text-gray-500">
                       Saved {new Date(bookmark.created_at).toLocaleDateString()}

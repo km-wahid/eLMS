@@ -19,7 +19,7 @@ def _course(slug):
     return get_object_or_404(Course, slug=slug)
 
 def _is_owner(user, course):
-    return user.role == 'admin' or course.teacher == user
+    return course.can_manage(user)
 
 def _is_enrolled(user, course):
     return Enrollment.objects.filter(student=user, course=course, status='active').exists()

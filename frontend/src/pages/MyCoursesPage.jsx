@@ -1,20 +1,58 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Upload, FileText } from 'lucide-react';
 import api from '../services/api';
+import materialService from '../services/materialService';
+import MaterialUploadModal from '../components/teacher/MaterialUploadModal';
 
 export default function MyCoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [materialCounts, setMaterialCounts] = useState({});
 
   useEffect(() => {
-    api.get('/courses/mine/')
-      .then(r => setCourses(r.data))
+    api.get('/courses/courses/mine/')
+      .then(r => {
+        // Handle both paginated and non-paginated responses
+        const data = r.data.results || r.data;
+        setCourses(data);
+        // Load material counts for each course
+        data.forEach(course => loadMaterialCount(course.slug));
+      })
+      .catch(err => {
+        console.error('Failed to load courses:', err);
+        setError(err.response?.data?.detail || 'Failed to load courses');
+      })
       .finally(() => setLoading(false));
   }, []);
 
+  const loadMaterialCount = async (courseSlug) => {
+    try {
+      const response = await materialService.getMaterials(courseSlug);
+      setMaterialCounts(prev => ({ ...prev, [courseSlug]: response.data.length }));
+    } catch (err) {
+      console.error('Failed to load material count:', err);
+    }
+  };
+
+  const handleUploadClick = (course) => {
+    setSelectedCourse(course);
+    setShowUploadModal(true);
+  };
+
+  const handleUploadSuccess = () => {
+    // Reload material count
+    if (selectedCourse) {
+      loadMaterialCount(selectedCourse.slug);
+    }
+  };
+
   const togglePublish = async (course) => {
     try {
-      const res = await api.patch(`/courses/${course.slug}/update/`, {
+      const res = await api.patch(`/courses/courses/${course.slug}/update/`, {
         is_published: !course.is_published,
       });
       setCourses(prev => prev.map(c => c.id === course.id ? { ...c, is_published: res.data.is_published } : c));
@@ -26,7 +64,7 @@ export default function MyCoursesPage() {
   const deleteCourse = async (slug) => {
     if (!confirm('Delete this course? This cannot be undone.')) return;
     try {
-      await api.delete(`/courses/${slug}/delete/`);
+      await api.delete(`/courses/courses/${slug}/delete/`);
       setCourses(prev => prev.filter(c => c.slug !== slug));
     } catch {
       alert('Failed to delete course.');
@@ -45,6 +83,19 @@ export default function MyCoursesPage() {
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
           </div>
+        ) : error ? (
+          <div className="text-center py-20">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <p className="text-red-600 font-semibold mb-2">Error Loading Courses</p>
+              <p className="text-red-500 text-sm">{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-4 btn btn-primary text-sm"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
         ) : courses.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
             <p className="text-5xl mb-4">📚</p>
@@ -62,12 +113,33 @@ export default function MyCoursesPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 truncate">{course.title}</h3>
-                  <p className="text-sm text-gray-500">{course.enrollment_count} students · {course.module_count} modules</p>
+                  <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                    <span>{course.enrollment_count} students</span>
+                    <span>·</span>
+                    <span>{course.module_count} modules</span>
+                    {materialCounts[course.slug] !== undefined && (
+                      <>
+                        <span>·</span>
+                        <span className="flex items-center gap-1">
+                          <FileText className="w-3.5 h-3.5" />
+                          {materialCounts[course.slug]} materials
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${course.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                     {course.is_published ? 'Published' : 'Draft'}
                   </span>
+                  <button
+                    onClick={() => handleUploadClick(course)}
+                    className="btn btn-secondary text-xs px-3 py-1 flex items-center gap-1"
+                    title="Upload Material"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Upload
+                  </button>
                   <Link to={`/courses/${course.slug}`} className="btn btn-secondary text-xs px-3 py-1">View</Link>
                   <Link to={`/courses/${course.slug}/edit`} className="btn btn-secondary text-xs px-3 py-1">Edit</Link>
                   <button onClick={() => togglePublish(course)} className="btn btn-secondary text-xs px-3 py-1">
@@ -80,6 +152,20 @@ export default function MyCoursesPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Material Upload Modal */}
+        {selectedCourse && (
+          <MaterialUploadModal
+            isOpen={showUploadModal}
+            onClose={() => {
+              setShowUploadModal(false);
+              setSelectedCourse(null);
+            }}
+            courseSlug={selectedCourse.slug}
+            modules={selectedCourse.modules || []}
+            onSuccess={handleUploadSuccess}
+          />
         )}
       </div>
     </div>

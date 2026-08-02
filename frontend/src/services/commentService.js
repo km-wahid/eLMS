@@ -1,6 +1,11 @@
 import api from './api';
 
 const commentService = {
+  getCommentsByContent: (contentId) =>
+    api.get(`/academics/comments/?content_item=${contentId}`),
+
+  postContentComment: (contentId, content, parentId = null) =>
+    api.post('/academics/comments/', { content_item: contentId, content, parent: parentId }),
   // Get comments for a lecture
   getCommentsByLecture: (lectureId) =>
     api.get(`/academics/comments/?lecture=${lectureId}`),

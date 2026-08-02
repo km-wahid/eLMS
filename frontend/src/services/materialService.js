@@ -12,10 +12,14 @@ const materialService = {
   getMaterial: (courseSlug, materialId) =>
     api.get(`/materials/${courseSlug}/materials/${materialId}/`),
 
-  uploadMaterial: (courseSlug, data) =>
+  uploadMaterial: (courseSlug, data, onUploadProgress) =>
     api.post(`/materials/${courseSlug}/materials/`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
     }),
+
+  updateMaterial: (courseSlug, materialId, data) =>
+    api.patch(`/materials/${courseSlug}/materials/${materialId}/`, data),
 
   deleteMaterial: (courseSlug, materialId) =>
     api.delete(`/materials/${courseSlug}/materials/${materialId}/`),

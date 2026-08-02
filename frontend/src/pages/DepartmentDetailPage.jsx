@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, BookOpen, CalendarDays } from 'lucide-react';
 import { useDepartmentStore } from '../store/departmentStore';
 import { useSemesterStore } from '../store/semesterStore';
 import Layout from '../components/layout/Layout';
+import { departmentCover } from '../utils/departmentCovers';
 
 export default function DepartmentDetailPage() {
   const { slug } = useParams();
@@ -25,8 +26,8 @@ export default function DepartmentDetailPage() {
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-        <div className="max-w-4xl mx-auto px-4">
+      <div className="min-h-[calc(100vh-3.5rem)] bg-[#f6f7fb] py-8 sm:py-12">
+        <div className="page-shell max-w-6xl">
           {/* Back Button */}
           <button
             onClick={() => navigate('/departments')}
@@ -46,51 +47,36 @@ export default function DepartmentDetailPage() {
           {/* Department Header */}
           {!loading && selectedDepartment && (
             <>
-              <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-                <div className="flex items-start gap-6">
-                  <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <span className="text-4xl font-bold text-white">{selectedDepartment.code.charAt(0)}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">{selectedDepartment.name}</h1>
-                    <p className="text-lg text-gray-600 mb-4">{selectedDepartment.code}</p>
-                    <p className="text-gray-700 mb-6 max-w-2xl">{selectedDepartment.description || 'No description available'}</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-indigo-50 rounded-lg p-4">
-                        <p className="text-sm text-gray-600">Semesters/Trimesters</p>
-                        <p className="text-2xl font-bold text-indigo-600">{selectedDepartment.semester_count}</p>
-                      </div>
-                      <div className="bg-purple-50 rounded-lg p-4">
-                        <p className="text-sm text-gray-600">Total Courses</p>
-                        <p className="text-2xl font-bold text-purple-600">{selectedDepartment.course_count}</p>
-                      </div>
-                    </div>
-                  </div>
+              <div className="relative mb-10 min-h-[390px] overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl">
+                <img src={departmentCover(selectedDepartment.code)} alt={`${selectedDepartment.name} facilities`} className="absolute inset-0 h-full w-full object-cover opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
+                <div className="relative flex min-h-[390px] max-w-3xl flex-col justify-end p-7 sm:p-12">
+                  <p className="eyebrow !text-indigo-300">Department of {selectedDepartment.code}</p>
+                  <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-6xl">{selectedDepartment.name}</h1>
+                  <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200">{selectedDepartment.description || 'Explore the full academic journey, from foundations to advanced practice.'}</p>
+                  <div className="mt-7 flex gap-3"><div className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur"><p className="text-2xl font-black">{selectedDepartment.semester_count}</p><p className="text-xs text-slate-300">Semesters</p></div><div className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur"><p className="text-2xl font-black">{selectedDepartment.course_count}</p><p className="text-xs text-slate-300">Courses</p></div></div>
                 </div>
               </div>
 
               {/* Semesters Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <BookOpen size={28} />
-                  Available Semesters
-                </h2>
+                <p className="eyebrow">Program structure</p><h2 className="mb-6 mt-2 flex items-center gap-2 text-3xl font-black tracking-tight text-slate-950"><BookOpen size={28} />Choose a semester</h2>
 
                 {semesters && semesters.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     {semesters.map((semester) => (
                       <div
                         key={semester.id}
                         onClick={() => navigate(`/semesters/${semester.slug}`)}
-                        className="group cursor-pointer bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6"
+                        className="group surface cursor-pointer p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                            <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-indigo-50 font-black text-indigo-700">{String(semester.order).padStart(2, '0')}</span><h3 className="text-xl font-bold text-slate-950 group-hover:text-indigo-600 transition-colors">
                               {semester.name}
                             </h3>
                             <p className="text-sm text-gray-600 mt-1">
-                              {semester.type === 'semester' ? '📚 Semester' : '⏱️ Trimester'} {semester.order}
+                              {semester.type === 'semester' ? 'Semester' : 'Trimester'} {semester.order}
                             </p>
                           </div>
                         </div>
@@ -105,10 +91,10 @@ export default function DepartmentDetailPage() {
                           </div>
                         )}
 
-                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3">
-                          <p className="text-sm font-semibold text-indigo-700">
+                        <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3">
+                          <p className="text-sm font-semibold text-slate-700">
                             {semester.course_count} course{semester.course_count !== 1 ? 's' : ''}
-                          </p>
+                          </p><ArrowUpRight size={18} className="text-indigo-600 transition-transform group-hover:rotate-45" />
                         </div>
                       </div>
                     ))}

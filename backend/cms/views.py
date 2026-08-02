@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
+from accounts.permissions import IsAdmin as IsAdminUser, IsSuperuser
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from courses.models import Course, Module, Enrollment, Category
@@ -50,7 +50,7 @@ def cms_stats(request):
 # ─── Users ────────────────────────────────────────────────────────────────────
 
 class CMSUserListCreate(generics.ListCreateAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsSuperuser]
     serializer_class   = CMSUserSerializer
     def get_queryset(self):
         qs   = User.objects.all().order_by('-created_at')
@@ -62,7 +62,7 @@ class CMSUserListCreate(generics.ListCreateAPIView):
 
 
 class CMSUserDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsSuperuser]
     queryset = User.objects.all()
     def get_serializer_class(self):
         if self.request.method in ['PUT','PATCH']: return CMSUserUpdateSerializer

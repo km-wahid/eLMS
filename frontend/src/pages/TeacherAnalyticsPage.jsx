@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useAnalyticsStore } from '../store/analyticsStore'
 import useCourseStore from '../store/courseStore'
 import { useAuthStore } from '../store/authStore'
+import { ArrowLeft, TrendingUp, Users, Clock, BarChart3 } from 'lucide-react'
 
 /**
  * TeacherAnalyticsPage - View course engagement and student analytics
@@ -20,14 +21,23 @@ const TeacherAnalyticsPage = () => {
 
   const [course, setCourse] = useState(null)
   const [timeRange, setTimeRange] = useState('month')
+  const [fetchError, setFetchError] = useState(null)
 
   useEffect(() => {
     const found = courses.find((c) => c.id === courseId)
     if (found) {
       setCourse(found)
-      fetchCourseAnalytics(courseId)
     }
-  }, [courseId, courses, fetchCourseAnalytics])
+  }, [courseId, courses])
+
+  useEffect(() => {
+    if (courseId) {
+      fetchCourseAnalytics(courseId).catch(err => {
+        console.error('Analytics fetch error:', err)
+        setFetchError(err.message || 'Failed to load analytics')
+      })
+    }
+  }, [courseId, fetchCourseAnalytics])
 
   if (!user?.is_teacher && !user?.is_admin) {
     return (
@@ -37,15 +47,33 @@ const TeacherAnalyticsPage = () => {
     )
   }
 
-  if (!course) {
+  if (loading && !courseAnalytics[courseId]) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-gray-600">Course not found</p>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     )
   }
 
-  const analytics = courseAnalytics[courseId] || {}
+  if (!course) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Course not found</p>
+          <Link to="/my-courses" className="text-indigo-600 hover:text-indigo-700">
+            ← Back to My Courses
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const analytics = courseAnalytics[courseId] || {
+    total_enrollments: 0,
+    engagement_score: 0,
+    completion_rate: 0,
+    active_students: 0,
+  }
 
   const StatCard = ({ label, value, icon, change }) => (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">

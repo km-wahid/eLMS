@@ -21,7 +21,7 @@ def _get_module_or_404(course, module_id):
 
 
 def _is_owner_or_admin(user, course):
-    return user.role == 'admin' or course.teacher == user
+    return course.can_manage(user)
 
 
 def _can_view_lecture(user, lecture):

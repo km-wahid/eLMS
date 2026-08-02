@@ -7,8 +7,8 @@ export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuthStore();
   const navigate  = useNavigate();
   const location  = useLocation();
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
-  const isAdmin   = user?.is_staff || user?.is_superuser || user?.role === 'admin';
+  const isTeacher = ['teacher', 'admin', 'superuser'].includes(user?.role);
+  const isAdmin   = ['admin', 'superuser'].includes(user?.role);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 

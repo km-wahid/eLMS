@@ -90,7 +90,13 @@ class Comment(models.Model):
     lecture = models.ForeignKey(
         Lecture,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        null=True,
+        blank=True,
+    )
+    content_item = models.ForeignKey(
+        'courses.ContentItem', on_delete=models.CASCADE, related_name='comments',
+        null=True, blank=True,
     )
     parent = models.ForeignKey(
         'self',
@@ -115,7 +121,8 @@ class Comment(models.Model):
         ]
 
     def __str__(self):
-        return f"Comment by {self.user.name} on {self.lecture.title}"
+        target = self.content_item or self.lecture
+        return f"Comment by {self.user.name} on {target.title}"
 
     @property
     def reply_count(self):
@@ -143,6 +150,10 @@ class Bookmark(models.Model):
         null=True,
         blank=True
     )
+    content_item = models.ForeignKey(
+        'courses.ContentItem', on_delete=models.CASCADE, related_name='bookmarks',
+        null=True, blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -150,6 +161,7 @@ class Bookmark(models.Model):
         unique_together = [
             ('user', 'lecture'),
             ('user', 'material'),
+            ('user', 'content_item'),
         ]
         indexes = [
             models.Index(fields=['user', 'created_at']),
@@ -158,14 +170,14 @@ class Bookmark(models.Model):
     def __str__(self):
         if self.lecture:
             return f"{self.user.name} bookmarked {self.lecture.title}"
-        return f"{self.user.name} bookmarked {self.material.title}"
+        target = self.content_item or self.material
+        return f"{self.user.name} bookmarked {target.title}"
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        if not self.lecture and not self.material:
-            raise ValidationError("Either lecture or material must be provided.")
-        if self.lecture and self.material:
-            raise ValidationError("Only one of lecture or material should be provided.")
+        targets = [self.lecture, self.material, self.content_item]
+        if sum(bool(target) for target in targets) != 1:
+            raise ValidationError("Exactly one content target must be provided.")
 
     def save(self, *args, **kwargs):
         self.clean()

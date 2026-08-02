@@ -13,13 +13,15 @@ from .serializers import (
     ProgressTrackingSerializer,
     CourseAnalyticsSerializer,
 )
-from accounts.permissions import IsAdmin, IsTeacher
+from accounts.permissions import IsAdmin, IsTeacherOrAdmin
 
 
 class DepartmentViewSet(viewsets.ModelViewSet):
-    queryset = Department.objects.all()
+    # The legacy GEN bucket only exists for migration compatibility; it is not
+    # part of the eight-department academic catalog shown to learners.
+    queryset = Department.objects.exclude(code='GEN')
     serializer_class = DepartmentSerializer
-    lookup_field = 'slug'
+    lookup_field = 'slug'  # Use slug for lookups
 
     def get_permissions(self):
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
@@ -29,7 +31,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
 class SemesterViewSet(viewsets.ModelViewSet):
     serializer_class = SemesterSerializer
-    lookup_field = 'slug'
+    lookup_field = 'slug'  # Use slug for lookups
 
     def get_queryset(self):
         queryset = Semester.objects.all()
@@ -49,10 +51,27 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        queryset = Comment.objects.all()
+        user = self.request.user
+        if user.role == 'student':
+            queryset = queryset.filter(
+                Q(content_item__module__course__enrollments__student=user) |
+                Q(lecture__module__course__enrollments__student=user)
+            ).distinct()
+        elif user.role == 'teacher':
+            queryset = queryset.filter(
+                Q(content_item__module__course__teacher=user) |
+                Q(content_item__module__course__teachers=user) |
+                Q(lecture__module__course__teacher=user) |
+                Q(lecture__module__course__teachers=user)
+            ).distinct()
+        content_item_id = self.request.query_params.get('content_item')
+        if content_item_id:
+            return queryset.filter(content_item_id=content_item_id, parent__isnull=True)
         lecture_id = self.request.query_params.get('lecture')
         if lecture_id:
-            return Comment.objects.filter(lecture__id=lecture_id, parent__isnull=True)
-        return Comment.objects.filter(parent__isnull=True)
+            return queryset.filter(lecture__id=lecture_id, parent__isnull=True)
+        return queryset.filter(parent__isnull=True)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -64,19 +83,25 @@ class CommentViewSet(viewsets.ModelViewSet):
         comment.save()
         return Response({'upvotes': comment.upvotes})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsTeacher])
+    @action(detail=True, methods=['post'], permission_classes=[IsTeacherOrAdmin])
     def pin(self, request, pk=None):
         comment = self.get_object()
         comment.pinned = not comment.pinned
         comment.save()
         return Response({'pinned': comment.pinned})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsTeacher])
+    @action(detail=True, methods=['post'], permission_classes=[IsTeacherOrAdmin])
     def resolve(self, request, pk=None):
         comment = self.get_object()
         comment.is_resolved = not comment.is_resolved
         comment.save()
         return Response({'is_resolved': comment.is_resolved})
+
+    def perform_destroy(self, instance):
+        if instance.user_id != self.request.user.id and not self.request.user.is_admin:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('You can only delete your own comments.')
+        instance.delete()
 
 
 class BookmarkViewSet(viewsets.ModelViewSet):
@@ -100,6 +125,11 @@ class BookmarkViewSet(viewsets.ModelViewSet):
         bookmarks = self.get_queryset().filter(material__isnull=False)
         serializer = self.get_serializer(bookmarks, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def content(self, request):
+        bookmarks = self.get_queryset().filter(content_item__isnull=False)
+        return Response(self.get_serializer(bookmarks, many=True).data)
 
 
 class ProgressTrackingViewSet(viewsets.ModelViewSet):
@@ -147,7 +177,7 @@ class CourseAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_admin:
+        if user.is_admin or user.is_superuser:
             return CourseAnalytics.objects.all()
         if user.is_teacher:
             return CourseAnalytics.objects.filter(course__teacher=user)

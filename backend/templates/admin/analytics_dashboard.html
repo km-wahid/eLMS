@@ -1,0 +1,585 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - {{ site_title }}{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .analytics-container {
+        padding: 20px;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #007bff;
+        margin: 10px 0;
+    }
+    
+    .metric-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .metric-icon {
+        font-size: 3rem;
+        color: #007bff;
+        opacity: 0.2;
+        position: absolute;
+        right: 20px;
+        top: 20px;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 30px 0 15px 0;
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+        height: 400px;
+    }
+    
+    .data-table {
+        width: 100%;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .data-table th {
+        background: #007bff;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+    }
+    
+    .data-table td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .data-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .badge-success { background: #28a745; color: white; }
+    .badge-warning { background: #ffc107; color: #333; }
+    .badge-danger { background: #dc3545; color: white; }
+    .badge-info { background: #17a2b8; color: white; }
+    
+    .health-indicator {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .health-indicator.warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
+    
+    .health-indicator.danger {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .health-indicator.success {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+    
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -10px;
+    }
+    
+    .col-md-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+        padding: 0 10px;
+    }
+    
+    .col-md-4 {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+        padding: 0 10px;
+    }
+    
+    .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        padding: 0 10px;
+    }
+    
+    .col-md-12 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding: 0 10px;
+    }
+    
+    @media (max-width: 768px) {
+        .col-md-3, .col-md-4, .col-md-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <h1 style="margin-bottom: 30px; color: #333;">
+        <i class="fas fa-chart-line"></i> Analytics Dashboard
+    </h1>
+    
+    <!-- Core Metrics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-user-graduate metric-icon"></i>
+                <div class="metric-label">Total Students</div>
+                <div class="metric-value">{{ total_students }}</div>
+                <small>{{ active_students }} active this week</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-chalkboard-teacher metric-icon"></i>
+                <div class="metric-label">Total Teachers</div>
+                <div class="metric-value">{{ total_teachers }}</div>
+                <small>{{ active_teachers }} uploaded recently</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-book metric-icon"></i>
+                <div class="metric-label">Total Courses</div>
+                <div class="metric-value">{{ total_courses }}</div>
+                <small>{{ published_courses }} published</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-layer-group metric-icon"></i>
+                <div class="metric-label">Total Modules</div>
+                <div class="metric-value">{{ total_modules }}</div>
+                <small>{{ total_content }} content items</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Secondary Metrics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-building metric-icon"></i>
+                <div class="metric-label">Departments</div>
+                <div class="metric-value">{{ total_departments }}</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-file-alt metric-icon"></i>
+                <div class="metric-label">Content Items</div>
+                <div class="metric-value">{{ total_content }}</div>
+                <small>{{ recent_uploads }} uploaded this week</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-users metric-icon"></i>
+                <div class="metric-label">Enrollments</div>
+                <div class="metric-value">{{ total_enrollments }}</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-chart-pie metric-icon"></i>
+                <div class="metric-label">Avg Completion</div>
+                <div class="metric-value">{{ avg_completion }}%</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <h2 class="section-title">
+        <i class="fas fa-chart-bar"></i> Visual Analytics
+    </h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 style="margin-top: 0; color: #555;">Courses by Department</h3>
+                <canvas id="departmentChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 style="margin-top: 0; color: #555;">Content Types Distribution</h3>
+                <canvas id="contentTypeChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="chart-container">
+                <h3 style="margin-top: 0; color: #555;">Student Activity (Last 7 Days)</h3>
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Popular Courses -->
+    <h2 class="section-title">
+        <i class="fas fa-fire"></i> Popular Courses
+    </h2>
+    
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Course</th>
+                <th>Department</th>
+                <th>Teacher</th>
+                <th>Enrollments</th>
+                <th>Modules</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for course in popular_courses %}
+            <tr>
+                <td>
+                    <strong>{{ course.title }}</strong><br>
+                    <small style="color: #6c757d;">{{ course.course_code }}</small>
+                </td>
+                <td>{{ course.department.name|default:"-" }}</td>
+                <td>{{ course.teacher.name|default:"-" }}</td>
+                <td><span class="badge badge-info">{{ course.enrollment_count }}</span></td>
+                <td>{{ course.module_count }}</td>
+                <td>
+                    {% if course.is_published %}
+                        <span class="badge badge-success">Published</span>
+                    {% else %}
+                        <span class="badge badge-warning">Draft</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #6c757d;">No courses yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Recent Activity -->
+    <h2 class="section-title">
+        <i class="fas fa-clock"></i> Recent Activity
+    </h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <h3 style="color: #555; margin-bottom: 15px;">Recent Courses</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in recent_courses %}
+                    <tr>
+                        <td>
+                            <strong>{{ course.title }}</strong><br>
+                            <small style="color: #6c757d;">{{ course.course_code }}</small>
+                        </td>
+                        <td>{{ course.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            {% if course.is_published %}
+                                <span class="badge badge-success">Published</span>
+                            {% else %}
+                                <span class="badge badge-warning">Draft</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #6c757d;">No recent courses</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="col-md-6">
+            <h3 style="color: #555; margin-bottom: 15px;">Teacher Uploads (This Week)</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Uploads</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for upload in teacher_uploads %}
+                    <tr>
+                        <td>{{ upload.uploaded_by__name|default:"Unknown" }}</td>
+                        <td><span class="badge badge-info">{{ upload.upload_count }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" style="text-align: center; color: #6c757d;">No uploads this week</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- System Health -->
+    <h2 class="section-title">
+        <i class="fas fa-heartbeat"></i> System Health
+    </h2>
+    
+    <div class="row">
+        <div class="col-md-12">
+            {% if courses_without_modules > 0 %}
+            <div class="health-indicator warning">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: #ffc107;"></i>
+                <div>
+                    <strong>{{ courses_without_modules }} courses without modules</strong><br>
+                    <small>These courses need content to be useful to students</small>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if modules_without_content > 0 %}
+            <div class="health-indicator warning">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: #ffc107;"></i>
+                <div>
+                    <strong>{{ modules_without_content }} modules without content</strong><br>
+                    <small>Add videos, PDFs, or other learning materials</small>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if unpublished_courses > 0 %}
+            <div class="health-indicator info" style="background: #d1ecf1; border-left: 4px solid #17a2b8;">
+                <i class="fas fa-info-circle" style="font-size: 1.5rem; color: #17a2b8;"></i>
+                <div>
+                    <strong>{{ unpublished_courses }} unpublished courses</strong><br>
+                    <small>Review and publish when ready</small>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if courses_without_modules == 0 and modules_without_content == 0 %}
+            <div class="health-indicator success">
+                <i class="fas fa-check-circle" style="font-size: 1.5rem; color: #28a745;"></i>
+                <div>
+                    <strong>All systems healthy!</strong><br>
+                    <small>Your eLMS platform is running smoothly</small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <h2 class="section-title">
+        <i class="fas fa-bolt"></i> Quick Actions
+    </h2>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <a href="{% url 'admin:courses_course_add' %}" class="metric-card" style="display: block; text-decoration: none; text-align: center;">
+                <i class="fas fa-plus-circle" style="font-size: 3rem; color: #28a745;"></i>
+                <div style="margin-top: 10px; color: #333; font-weight: 600;">Create Course</div>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'admin:courses_course_changelist' %}" class="metric-card" style="display: block; text-decoration: none; text-align: center;">
+                <i class="fas fa-list" style="font-size: 3rem; color: #007bff;"></i>
+                <div style="margin-top: 10px; color: #333; font-weight: 600;">View All Courses</div>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'admin:academics_department_changelist' %}" class="metric-card" style="display: block; text-decoration: none; text-align: center;">
+                <i class="fas fa-building" style="font-size: 3rem; color: #6f42c1;"></i>
+                <div style="margin-top: 10px; color: #333; font-weight: 600;">Manage Departments</div>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'admin:auth_user_changelist' %}" class="metric-card" style="display: block; text-decoration: none; text-align: center;">
+                <i class="fas fa-users" style="font-size: 3rem; color: #fd7e14;"></i>
+                <div style="margin-top: 10px; color: #333; font-weight: 600;">Manage Users</div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Chart.js defaults
+Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+Chart.defaults.color = '#666';
+
+// Department Chart
+const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+new Chart(departmentCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ department_labels|safe }},
+        datasets: [{
+            label: 'Courses',
+            data: {{ department_data|safe }},
+            backgroundColor: 'rgba(0, 123, 255, 0.7)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Content Type Chart
+const contentTypeCtx = document.getElementById('contentTypeChart').getContext('2d');
+new Chart(contentTypeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ content_type_labels|safe }},
+        datasets: [{
+            data: {{ content_type_data|safe }},
+            backgroundColor: [
+                'rgba(220, 53, 69, 0.7)',   // video - red
+                'rgba(253, 126, 20, 0.7)',  // pdf - orange
+                'rgba(255, 193, 7, 0.7)',   // slide - yellow
+                'rgba(40, 167, 69, 0.7)',   // text - green
+                'rgba(23, 162, 184, 0.7)'   // link - blue
+            ],
+            borderColor: [
+                'rgba(220, 53, 69, 1)',
+                'rgba(253, 126, 20, 1)',
+                'rgba(255, 193, 7, 1)',
+                'rgba(40, 167, 69, 1)',
+                'rgba(23, 162, 184, 1)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right'
+            }
+        }
+    }
+});
+
+// Activity Chart
+const activityCtx = document.getElementById('activityChart').getContext('2d');
+new Chart(activityCtx, {
+    type: 'line',
+    data: {
+        labels: {{ activity_labels|safe }},
+        datasets: [{
+            label: 'Content Views',
+            data: {{ activity_data|safe }},
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

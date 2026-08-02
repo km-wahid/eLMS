@@ -8,6 +8,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 DJANGO_APPS = [
+    'jazzmin',  # Must be before django.contrib.admin
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -36,12 +37,14 @@ LOCAL_APPS = [
     'livestream',
     'notifications',
     'cms',
+    'notes',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise right after SecurityMiddleware
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,7 +59,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -99,6 +102,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -190,4 +195,135 @@ SPECTACULAR_SETTINGS = {
         {'name': 'livestream',    'description': 'Live class sessions'},
         {'name': 'notifications', 'description': 'Real-time notifications'},
     ],
+}
+
+
+# ==============================================================================
+# JAZZMIN ADMIN THEME CONFIGURATION
+# ==============================================================================
+
+JAZZMIN_SETTINGS = {
+    # Title
+    "site_title": "eLMS Admin",
+    "site_header": "eLMS Administration",
+    "site_brand": "eLMS",
+    "site_logo": None,
+    "login_logo": None,
+    "site_logo_classes": "img-circle",
+    "site_icon": None,
+    
+    # Welcome text
+    "welcome_sign": "Welcome to eLMS Admin Dashboard",
+    "copyright": "eLMS © 2026",
+    
+    # Search model
+    "search_model": "courses.Course",
+    
+    # User menu
+    "topmenu_links": [
+        {"name": "Dashboard", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Analytics", "url": "admin:analytics_dashboard", "permissions": ["auth.view_user"]},
+        {"name": "Frontend", "url": "/", "new_window": True},
+        {"model": "auth.User"},
+        {"app": "courses"},
+    ],
+    
+    # Side menu
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    
+    # Custom links
+    "custom_links": {
+        "courses": [
+            {
+                "name": "Course Analytics",
+                "url": "admin:analytics_dashboard",
+                "icon": "fas fa-chart-line",
+                "permissions": ["courses.view_course"]
+            }
+        ]
+    },
+    
+    # Icons for models
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        
+        "academics.Department": "fas fa-building",
+        "academics.Semester": "fas fa-calendar",
+        
+        "courses.Course": "fas fa-book",
+        "courses.Module": "fas fa-layer-group",
+        "courses.ContentItem": "fas fa-file-alt",
+        "courses.Category": "fas fa-tags",
+        "courses.Enrollment": "fas fa-user-graduate",
+        "courses.CourseProgress": "fas fa-chart-line",
+        "courses.ModuleProgress": "fas fa-tasks",
+        "courses.ContentProgress": "fas fa-check-circle",
+        
+        "lectures.Lecture": "fas fa-video",
+        "materials.Material": "fas fa-folder",
+        "assignments.Assignment": "fas fa-clipboard-list",
+        "livestream.LiveStream": "fas fa-broadcast-tower",
+        "notifications.Notification": "fas fa-bell",
+    },
+    
+    # Default icon
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    
+    # Related modal
+    "related_modal_active": False,
+    
+    # UI Tweaks
+    "custom_css": None,
+    "custom_js": None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+    
+    # Change view
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+        "auth.group": "vertical_tabs"
+    },
+    
+    # Language chooser
+    "language_chooser": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-white navbar-light",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    },
+    "actions_sticky_top": False
 }

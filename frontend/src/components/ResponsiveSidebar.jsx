@@ -24,6 +24,7 @@ const ResponsiveSidebar = ({ isOpen, onClose }) => {
   const teacherItems = [
     { label: 'Academic Mgmt', path: '/teacher/academic', icon: '🎓' },
     { label: 'My Courses', path: '/my-courses', icon: '📖' },
+    { label: 'Materials', path: '/teacher/materials', icon: '📄' },
     { label: 'CMS Dashboard', path: '/cms', icon: '⚙️' },
   ]
 
@@ -94,7 +95,7 @@ const ResponsiveSidebar = ({ isOpen, onClose }) => {
           </div>
 
           {/* Teacher Navigation */}
-          {user?.is_teacher && (
+          {['teacher', 'admin', 'superuser'].includes(user?.role) && (
             <div className="mb-6 pb-6 border-b border-gray-200">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Teacher
@@ -120,7 +121,7 @@ const ResponsiveSidebar = ({ isOpen, onClose }) => {
           )}
 
           {/* Admin Navigation */}
-          {user?.is_admin && (
+          {['admin', 'superuser'].includes(user?.role) && (
             <div className="mb-6 pb-6 border-b border-gray-200">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Admin

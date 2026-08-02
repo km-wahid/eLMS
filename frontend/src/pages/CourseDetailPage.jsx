@@ -102,7 +102,7 @@ export default function CourseDetailPage() {
 
   // ── Real enroll API call ───────────────────────────────────────────────────
   const handleEnroll = async () => {
-    if (!isAuthenticated) { navigate('/login'); return; }
+    if (!isAuthenticated) { navigate('/login', { state: { intent: 'enroll', courseSlug: course.slug, courseTitle: course.title, returnTo: `/courses/${course.slug}` } }); return; }
     setEnrolling(true);
     setEnrollError(null);
     try {

@@ -20,7 +20,7 @@ def _handle_enrollment(sender, instance, created, **kwargs):
     )
     # Notify the course teacher
     Notification.create_and_push(
-        recipient=instance.course.instructor,
+        recipient=instance.course.teacher,
         type=Notification.Type.ENROLLMENT,
         title="New Enrollment",
         message=f"{instance.student.get_full_name() or instance.student.email} enrolled in '{instance.course.title}'.",
@@ -32,7 +32,7 @@ def _handle_enrollment(sender, instance, created, **kwargs):
 def _handle_submission(sender, instance, created, **kwargs):
     if not created:
         return
-    teacher = instance.assignment.course.instructor
+    teacher = instance.assignment.course.teacher
     Notification.create_and_push(
         recipient=teacher,
         type=Notification.Type.SUBMISSION_NEW,

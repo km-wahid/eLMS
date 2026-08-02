@@ -3,6 +3,7 @@ from rest_framework import serializers
 from courses.models import Course, Module, Enrollment, Category
 from lectures.models import Lecture
 from materials.models import Material
+from academics.models import Department, Semester
 
 User = get_user_model()
 
@@ -49,7 +50,7 @@ class CMSCourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = [
             'id','title','slug','instructor_name','category','level',
-            'price','is_published','enrollment_count','thumbnail_url_resolved','created_at',
+            'price','is_published','availability','is_available','enrollment_count','thumbnail_url_resolved','created_at',
         ]
         read_only_fields = ['id','slug','instructor_name','created_at','enrollment_count']
 
@@ -77,13 +78,19 @@ class CMSCourseFullSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), source='category',
         required=False, allow_null=True
     )
+    department_id = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(), source='department', required=False, allow_null=True
+    )
+    semester_id = serializers.PrimaryKeyRelatedField(
+        queryset=Semester.objects.all(), source='semester', required=False, allow_null=True
+    )
 
     class Meta:
         model = Course
         fields = [
-            'id','title','slug','description','instructor_name','category_name',
-            'teacher_id','category_id','thumbnail','thumbnail_url',
-            'thumbnail_url_resolved','level','is_published','price',
+            'id','title','slug','description','course_code','instructor_name','category_name',
+            'teacher_id','category_id','department_id','semester_id','thumbnail','thumbnail_url',
+            'thumbnail_url_resolved','level','is_published','availability','is_available','price',
             'enrollment_count','created_at','updated_at',
         ]
         read_only_fields = ['id','slug','instructor_name','category_name','created_at','updated_at','enrollment_count']
@@ -221,3 +228,76 @@ class CMSMaterialSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['uploaded_by'] = self.context['request'].user
         return super().create(validated_data)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DEPARTMENT & SEMESTER SERIALIZERS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class CMSDepartmentSerializer(serializers.ModelSerializer):
+    course_count = serializers.IntegerField(read_only=True)
+    head_name = serializers.CharField(source='head_of_department.name', read_only=True)
+    
+    class Meta:
+        model = Department
+        fields = [
+            'id', 'name', 'code', 'description',
+            'head_of_department', 'head_name',
+            'contact_email', 'contact_phone',
+            'course_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'course_count']
+
+
+class CMSSemesterSerializer(serializers.ModelSerializer):
+    course_count = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = Semester
+        fields = [
+            'id', 'name', 'academic_year', 'semester_type',
+            'start_date', 'end_date', 'is_active',
+            'course_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'course_count']
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONTENT ITEM SERIALIZER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from courses.models import ContentItem
+
+class CMSContentItemSerializer(serializers.ModelSerializer):
+    module_title = serializers.CharField(source='module.title', read_only=True)
+    course_title = serializers.CharField(source='module.course.title', read_only=True)
+    uploaded_by_name = serializers.CharField(source='uploaded_by.name', read_only=True)
+    
+    class Meta:
+        model = ContentItem
+        fields = [
+            'id', 'module', 'module_title', 'course_title',
+            'title', 'content_type', 'file', 'external_url',
+            'content_text', 'order', 'is_downloadable',
+            'duration_minutes', 'uploaded_by', 'uploaded_by_name',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'uploaded_by', 'created_at', 'updated_at']
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ENROLLMENT SERIALIZER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class CMSEnrollmentSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.name', read_only=True)
+    course_title = serializers.CharField(source='course.title', read_only=True)
+    
+    class Meta:
+        model = Enrollment
+        fields = [
+            'id', 'student', 'student_name',
+            'course', 'course_title',
+            'enrolled_at'
+        ]
+        read_only_fields = ['id', 'enrolled_at']

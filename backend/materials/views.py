@@ -14,7 +14,7 @@ def _get_course(slug):
 
 
 def _is_owner_or_admin(user, course):
-    return user.role == 'admin' or course.teacher == user
+    return course.can_manage(user)
 
 
 def _has_access(user, course):

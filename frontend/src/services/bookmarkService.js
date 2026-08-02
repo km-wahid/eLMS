@@ -22,6 +22,9 @@ const bookmarkService = {
       material: materialId,
     }),
 
+  bookmarkContent: (contentId) =>
+    api.post('/academics/bookmarks/', { content_item: contentId }),
+
   // Remove a bookmark
   removeBookmark: (bookmarkId) => api.delete(`/academics/bookmarks/${bookmarkId}/`),
 

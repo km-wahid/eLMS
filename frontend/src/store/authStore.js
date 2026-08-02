@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import useCourseStore from './courseStore'
+import api from '../services/api'
 
 // Synchronously wipe all user-specific data from every store
 function clearAllStores() {
@@ -29,6 +30,19 @@ export const useAuthStore = create(
       },
 
       updateUser: (user) => set({ user }),
+
+      // Update student's selected department
+      updateDepartment: async (departmentId) => {
+        try {
+          const response = await api.patch('/auth/profile/', { department: departmentId })
+          set((state) => ({
+            user: { ...state.user, department: departmentId, department_name: response.data.department_name }
+          }))
+          return response.data
+        } catch (error) {
+          throw error
+        }
+      },
 
       clearAuth: () => {
         clearAllStores()

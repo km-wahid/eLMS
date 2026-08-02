@@ -7,8 +7,11 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from .admin_views import analytics_dashboard
 
 urlpatterns = [
+    # ── Admin ─────────────────────────────────────────────
+    path('admin/analytics/', analytics_dashboard, name='admin-analytics-dashboard'),
     path('admin/', admin.site.urls),
 
     # ── API apps ──────────────────────────────────────────
@@ -21,6 +24,7 @@ urlpatterns = [
     path('api/livestream/',    include('livestream.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/cms/',           include('cms.urls')),
+    path('api/',               include('notes.urls')),
 
     # ── API Schema & Docs ─────────────────────────────────
     path('api/schema/',        SpectacularAPIView.as_view(),        name='schema'),
@@ -30,3 +34,4 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

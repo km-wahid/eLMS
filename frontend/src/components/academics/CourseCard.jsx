@@ -1,52 +1,51 @@
 import React from 'react';
-import { Users, BookOpen, FileText } from 'lucide-react';
+import { Users, BookOpen, ArrowUpRight, Clock3 } from 'lucide-react';
+import { departmentCover } from '../../utils/departmentCovers';
 
 export default function CourseCard({ course, isEnrolled, onEnroll, onClick }) {
   const { id, title, course_code, teacher_name, description, module_count, enrollment_count } = course;
-  const materialCount = module_count ? module_count * 2 : 0; // Estimate
+  const materialCount = module_count ? module_count * 4 : 0;
+  const available = course.availability === 'available' || course.is_available;
 
   return (
     <div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+      className="group overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col"
     >
       {/* Header */}
-      <div className="h-24 bg-gradient-to-br from-blue-500 to-cyan-600 relative overflow-hidden p-4 flex items-end justify-between">
-        <div className="flex-1">
-          <p className="text-white text-xs font-semibold opacity-90">{course_code}</p>
-          <h3 className="text-white font-bold text-sm line-clamp-1">{title}</h3>
-        </div>
+      <div className="relative h-36 overflow-hidden">
+        <img src={departmentCover(course.department_code)} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/30 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-4 text-white"><p className="text-xs font-bold tracking-widest text-white/70">{course_code}</p><h3 className="mt-1 font-bold line-clamp-1">{title}</h3></div>
       </div>
 
       {/* Content */}
-      <div className="p-4 flex-1 flex flex-col">
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{description}</p>
+      <div className="p-5 flex-1 flex flex-col">
+        <div className="mb-3 flex items-center justify-between"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${available ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{available ? 'Open now' : 'Coming soon'}</span><span className="text-xs font-semibold capitalize text-slate-500">{course.level}</span></div>
+        <p className="text-sm leading-6 text-slate-600 mb-4 line-clamp-2">{description}</p>
         
         {/* Teacher */}
-        <p className="text-xs text-gray-700 font-semibold mb-4">
-          👨‍🏫 {teacher_name || 'Instructor'}
+        <p className="text-xs text-slate-700 font-semibold mb-4">
+          Led by {teacher_name || 'Instructor'}
         </p>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-4 mt-auto text-xs">
-          <div className="bg-blue-50 rounded-lg p-2 flex items-center gap-2">
-            <BookOpen size={14} className="text-blue-600" />
-            <span className="text-gray-700">{module_count || 0} modules</span>
-          </div>
-          <div className="bg-green-50 rounded-lg p-2 flex items-center gap-2">
-            <Users size={14} className="text-green-600" />
-            <span className="text-gray-700">{enrollment_count || 0} students</span>
-          </div>
+        <div className="mb-5 mt-auto flex items-center gap-4 border-t border-slate-100 pt-4 text-xs font-medium text-slate-500">
+          <span className="flex items-center gap-1.5"><BookOpen size={14} />{module_count || 0} modules</span>
+          <span className="flex items-center gap-1.5"><Users size={14} />{enrollment_count || 0} learners</span>
         </div>
 
         {/* Actions */}
         <div className="flex gap-2">
           <button
             onClick={onClick}
-            className="flex-1 px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors font-semibold text-sm"
+            className="flex-1 px-3 py-2.5 bg-slate-950 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold text-sm flex items-center justify-center gap-2"
           >
-            View Course
+            View course <ArrowUpRight size={15} />
           </button>
-          {!isEnrolled && (
+          {!available && (
+            <span className="px-3 py-2.5 rounded-xl bg-amber-50 text-amber-700 font-semibold text-sm"><Clock3 size={16} /></span>
+          )}
+          {available && !isEnrolled && (
             <button
               onClick={(e) => {
                 e.stopPropagation();

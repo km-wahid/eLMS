@@ -55,7 +55,13 @@ function CourseRow({ c, onToggle, onDelete }) {
   );
 }
 
-const EMPTY_FORM = { title:'', description:'', level:'beginner', price:'0.00', is_published:false, thumbnail_url:'' };
+const EMPTY_FORM = { 
+  title:'', 
+  course_code: '',
+  description:'', 
+  is_published:false, 
+  thumbnail_url:'' 
+};
 
 export default function CMSCourses() {
   const navigate = useNavigate();
@@ -70,7 +76,9 @@ export default function CMSCourses() {
   const [creating,   setCreating]   = useState(false);
   const [teachers,   setTeachers]   = useState([]);
   const [categories, setCategories] = useState([]);
-  const [createForm, setCreateForm] = useState({...EMPTY_FORM, teacher_id:'', category_id:''});
+  const [departments, setDepartments] = useState([]);
+  const [semesters,   setSemesters]   = useState([]);
+  const [createForm, setCreateForm] = useState({...EMPTY_FORM, teacher_id:'', category_id:'', department_id:'', semester_id:''});
   const thumbRef = useRef();
 
   const toast$ = (msg, ok=true) => { setToast({msg,ok}); setTimeout(()=>setToast(null),3500); };
@@ -86,20 +94,48 @@ export default function CMSCourses() {
   useEffect(() => { const t=setTimeout(load,300); return ()=>clearTimeout(t); }, [load]);
 
   const openCreate = () => {
-    Promise.all([api.get('/cms/teachers/'), api.get('/cms/categories/')]).then(([tr, cr]) => {
+    Promise.all([
+      api.get('/cms/teachers/'), 
+      api.get('/cms/categories/'),
+      api.get('/academics/departments/')
+    ]).then(([tr, cr, depts]) => {
       setTeachers(tr.data.results ?? tr.data);
       setCategories(cr.data.results ?? cr.data);
+      setDepartments(depts.data.results ?? depts.data);
     });
-    setCreateForm({...EMPTY_FORM, teacher_id:'', category_id:''});
+    setCreateForm({...EMPTY_FORM, teacher_id:'', category_id:'', department_id:'', semester_id:''});
+    setSemesters([]);
     setShowCreate(true);
   };
 
+  // Load semesters when department changes
+  useEffect(() => {
+    if (createForm.department_id) {
+      api.get('/academics/semesters/', { params: { department: createForm.department_id } })
+        .then(r => setSemesters(r.data.results ?? r.data))
+        .catch(() => setSemesters([]));
+    } else {
+      setSemesters([]);
+    }
+  }, [createForm.department_id]);
+
   const doCreate = async () => {
     if (!createForm.title) { toast$('Title required', false); return; }
+    if (!createForm.course_code) { toast$('Course code required', false); return; }
+    if (!createForm.description) { toast$('Description required', false); return; }
+    if (!createForm.department_id) { toast$('Department required', false); return; }
+    if (!createForm.semester_id) { toast$('Semester required', false); return; }
     setCreating(true);
     try {
       const fd = new FormData();
-      Object.entries(createForm).forEach(([k,v]) => { if (v !== '' && v !== null && v !== undefined) fd.append(k, v); });
+      Object.entries(createForm).forEach(([k,v]) => { 
+        // Always append required fields even if empty, skip only truly null/undefined values
+        if (k === 'title' || k === 'course_code' || k === 'description' || k === 'department_id' || k === 'semester_id') {
+          fd.append(k, v || '');
+        } else if (v !== '' && v !== null && v !== undefined) {
+          fd.append(k, v);
+        }
+      });
       if (thumbRef.current?.files[0]) fd.append('thumbnail', thumbRef.current.files[0]);
       const { data } = await api.post('/cms/courses/create/', fd, { headers:{'Content-Type':'multipart/form-data'} });
       setShowCreate(false);
@@ -269,6 +305,29 @@ export default function CMSCourses() {
                   value={createForm.title} onChange={e => setCreateForm(f => ({...f,title:e.target.value}))} />
               </div>
               <div>
+                <label className="text-xs font-mono text-gray-600 block mb-1">course_code * <span className="text-gray-400">(e.g., CS101, BBA201)</span></label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-[#337ab7]"
+                  placeholder="CS101" value={createForm.course_code} onChange={e => setCreateForm(f => ({...f,course_code:e.target.value.toUpperCase()}))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-mono text-gray-600 block mb-1">department_id *</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
+                    value={createForm.department_id} onChange={e => setCreateForm(f => ({...f,department_id:e.target.value, semester_id:''}))}>
+                    <option value="">— select —</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-gray-600 block mb-1">semester_id *</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono" disabled={!createForm.department_id}
+                    value={createForm.semester_id} onChange={e => setCreateForm(f => ({...f,semester_id:e.target.value}))}>
+                    <option value="">— select —</option>
+                    {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
                 <label className="text-xs font-mono text-gray-600 block mb-1">description *</label>
                 <textarea rows={3} className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-[#337ab7] resize-none"
                   value={createForm.description} onChange={e => setCreateForm(f => ({...f,description:e.target.value}))} />
@@ -289,19 +348,6 @@ export default function CMSCourses() {
                     <option value="">— none —</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-gray-600 block mb-1">level</label>
-                  <select className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
-                    value={createForm.level} onChange={e => setCreateForm(f => ({...f,level:e.target.value}))}>
-                    {['beginner','intermediate','advanced'].map(l => <option key={l}>{l}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-gray-600 block mb-1">price</label>
-                  <input type="number" step="0.01" min="0"
-                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-[#337ab7]"
-                    value={createForm.price} onChange={e => setCreateForm(f => ({...f,price:e.target.value}))} />
                 </div>
               </div>
               <div>

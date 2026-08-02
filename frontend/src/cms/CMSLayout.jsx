@@ -3,12 +3,16 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 const NAV_LINKS = [
-  { label: 'Dashboard',  path: '/cms' },
-  { label: 'Users',      path: '/cms/users' },
-  { label: 'Courses',    path: '/cms/courses' },
-  { label: 'Resources',  path: '/cms/materials' },
-  { label: 'Analytics',  path: '/cms/analytics' },
-  { label: 'Settings',   path: '/cms/settings' },
+  { label: 'Dashboard',    path: '/cms' },
+  { label: 'Departments',  path: '/cms/departments' },
+  { label: 'Semesters',    path: '/cms/semesters' },
+  { label: 'Users',        path: '/cms/users', superuserOnly: true },
+  { label: 'Courses',      path: '/cms/courses' },
+  { label: 'Resources',    path: '/cms/materials' },
+  { label: 'Analytics',    path: '/cms/analytics' },
+  { label: '──────',       path: '#', divider: true },
+  { label: '⚙️ Admin',     path: '/admin' },
+  { label: 'Settings',     path: '/cms/settings' },
 ];
 
 // DRF-style method badge
@@ -90,11 +94,19 @@ export default function CMSLayout({ children }) {
 
           {/* Nav links */}
           <div className="flex items-center">
-            {NAV_LINKS.map(n => {
-              const active = n.path === '/cms' ? location.pathname === '/cms' : location.pathname.startsWith(n.path);
+            {NAV_LINKS.map((n, idx) => {
+              if (n.superuserOnly && user?.role !== 'superuser') return null;
+              if (n.divider) {
+                return <span key={idx} className="text-gray-600 px-1 select-none pointer-events-none">|</span>
+              }
+              const active = n.path === '/cms' 
+                ? location.pathname === '/cms' 
+                : n.path === '/admin'
+                  ? location.pathname === '/admin'
+                  : location.pathname.startsWith(n.path);
               return (
                 <Link key={n.path} to={n.path}
-                  className={`text-sm px-3 py-3 border-b-2 transition-colors ${
+                  className={`text-sm px-3 py-3 border-b-2 transition-colors whitespace-nowrap ${
                     active
                       ? 'text-white border-[#337ab7]'
                       : 'text-[#9d9d9d] border-transparent hover:text-white hover:bg-[#333]'
