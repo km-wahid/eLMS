@@ -1,7 +1,9 @@
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom'
 import { ArrowRight, BookOpen, Building2, Layers3 } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './store/authStore'
+import LoadingPage from './pages/loading_page'
 import Layout from './components/layout/Layout'
 import CMSLayout from './cms/CMSLayout'
 import CMSDashboard from './cms/CMSDashboard'
@@ -42,18 +44,49 @@ import StudentCourseViewPage from './pages/StudentCourseViewPage'
 import MyLearningPage from './pages/MyLearningPage'
 import UnifiedAdminDashboard from './pages/UnifiedAdminDashboard'
 
+function TypewriterText({ text, speed = 35 }) {
+  const [displayedText, setDisplayedText] = useState('')
+  const [isFinished, setIsFinished] = useState(false)
+
+  useEffect(() => {
+    let index = 0
+    setDisplayedText('')
+    setIsFinished(false)
+    const timer = setInterval(() => {
+      if (index < text.length) {
+        setDisplayedText(text.slice(0, index + 1))
+        index++
+      } else {
+        setIsFinished(true)
+        clearInterval(timer)
+      }
+    }, speed)
+
+    return () => clearInterval(timer)
+  }, [text, speed])
+
+  return (
+    <span>
+      {displayedText}
+      <span className={`inline-block w-0.5 h-5 bg-indigo-400 ml-1 align-middle ${isFinished ? 'animate-pulse opacity-75' : 'opacity-100'}`} />
+    </span>
+  )
+}
+
 function Home() {
   const { isAuthenticated } = useAuthStore()
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-[#f6f7fb] py-8 sm:py-12">
       <div className="page-shell">
-        <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 px-7 py-16 text-white shadow-xl sm:px-14 sm:py-24">
+        <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 px-7 py-16 text-white shadow-xl sm:px-14 sm:py-24 animate-fade-up">
           <img src="/images/departments/cse.jpg" alt="University students learning in a modern computing lab" className="absolute inset-0 h-full w-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/25" />
           <div className="relative max-w-3xl">
             <p className="eyebrow !text-indigo-300">A complete university learning platform</p>
             <h1 className="mt-4 text-5xl font-black leading-[1.02] tracking-tight sm:text-7xl">Your degree,<br /><span className="text-indigo-300">clearly organized.</span></h1>
-            <p className="mb-9 mt-6 max-w-2xl text-lg leading-8 text-slate-300">Discover every department, follow the semester structure, and learn from rich course content—all in one focused workspace.</p>
+            <p className="mb-9 mt-6 max-w-2xl text-lg leading-8 text-slate-300 min-h-[3.5rem]">
+              <TypewriterText text="Discover every department, follow the semester structure, and learn from rich course content—all in one focused workspace." speed={35} />
+            </p>
             <div className="flex flex-wrap gap-3">
           <Link to="/departments" className="btn bg-white text-slate-950 hover:bg-indigo-50">
             Browse Departments <ArrowRight size={17} />
@@ -69,7 +102,7 @@ function Home() {
           )}
           </div></div>
         </section>
-        <section className="grid gap-5 py-8 sm:grid-cols-3">
+        <section className="grid gap-5 py-8 sm:grid-cols-3 animate-fade-up delay-200">
           {[[Building2,'8','Departments','Explore distinct academic programs.'],[Layers3,'64','Semesters','Follow a clear degree structure.'],[BookOpen,'512','Courses','100 include detailed learning content.']].map(([Icon,value,label,copy]) => <div key={label} className="surface p-6"><Icon className="mb-5 text-indigo-600" size={25}/><p className="text-3xl font-black text-slate-950">{value}</p><p className="mt-1 font-bold text-slate-800">{label}</p><p className="mt-2 text-sm leading-6 text-slate-500">{copy}</p></div>)}
         </section>
       </div>
@@ -107,11 +140,17 @@ const SuperuserCMSRoute = ({ children }) => {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true)
+
   return (
     <>
+      {showSplash && <LoadingPage onFinish={() => setShowSplash(false)} />}
       <Toaster position="top-right" />
+
       <Router>
       <Routes>
+        <Route path="/loading" element={<LoadingPage />} />
+
         {/* ── CMS routes (own layout, no Navbar) ─────── */}
         <Route path="/cms"                    element={<CMSRoute><CMSDashboard /></CMSRoute>} />
         <Route path="/cms/departments"        element={<CMSRoute><CMSDepartments /></CMSRoute>} />

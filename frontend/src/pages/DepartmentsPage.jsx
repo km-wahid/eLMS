@@ -23,7 +23,7 @@ export default function DepartmentsPage() {
     <Layout>
       <div className="min-h-[calc(100vh-3.5rem)] bg-[#f6f7fb] py-8 sm:py-12">
         <div className="page-shell">
-          <div className="relative mb-8 overflow-hidden rounded-[2rem] bg-slate-950 p-7 text-white sm:p-10">
+          <div className="relative mb-8 overflow-hidden rounded-[2rem] bg-slate-950 p-7 text-white sm:p-10 animate-fade-up">
             <div className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-indigo-500/30 blur-3xl" />
             <div className="relative max-w-3xl">
               <p className="eyebrow !text-indigo-300"><Sparkles size={14} /> Explore your path</p>
@@ -33,7 +33,7 @@ export default function DepartmentsPage() {
             </div>
           </div>
 
-          <div className="relative mb-8 max-w-xl">
+          <div className="relative mb-8 max-w-xl animate-fade-up delay-150">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
             <input
               type="text"
@@ -53,14 +53,14 @@ export default function DepartmentsPage() {
 
           {/* Error State */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-red-700">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-red-700 animate-fade-up">
               Failed to load departments: {error}
             </div>
           )}
 
           {/* Departments Grid */}
           {!loading && filteredDepartments.length > 0 && (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-up delay-300">
               {filteredDepartments.map((dept) => (
                 <DepartmentCard
                   key={dept.id}

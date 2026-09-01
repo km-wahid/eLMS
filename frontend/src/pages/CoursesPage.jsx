@@ -150,7 +150,7 @@ export default function CoursesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-indigo-700 to-purple-700 py-14 px-4 text-white text-center">
+      <div className="bg-gradient-to-r from-indigo-700 to-purple-700 py-14 px-4 text-white text-center animate-fade-up">
         <h1 className="text-4xl font-extrabold mb-2">Explore Courses</h1>
         <p className="text-indigo-200 text-lg">Grow your skills with expert-led courses</p>
         <div className="mt-6 max-w-xl mx-auto flex gap-2">
@@ -165,7 +165,7 @@ export default function CoursesPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex flex-wrap items-center gap-3 mb-6 animate-fade-up delay-150">
           <Filter className="h-4 w-4 text-gray-400" />
           <span className="text-sm text-gray-500">Filter:</span>
           {['', 'beginner', 'intermediate', 'advanced'].map(l => (
@@ -183,12 +183,12 @@ export default function CoursesPage() {
           ))}
         </div>
 
-        <p className="text-sm text-gray-400 mb-4">{filtered.length} course{filtered.length !== 1 ? 's' : ''} found</p>
+        <p className="text-sm text-gray-400 mb-4 animate-fade-up delay-200">{filtered.length} course{filtered.length !== 1 ? 's' : ''} found</p>
 
         {filtered.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">No courses match your search.</div>
+          <div className="text-center py-20 text-gray-400 animate-fade-up delay-300">No courses match your search.</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-up delay-300">
             {filtered.map((course, i) => <CourseCard key={course.id} course={course} colorIdx={i} />)}
           </div>
         )}

@@ -74,7 +74,7 @@ export default function MyCoursesPage() {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 animate-fade-up">
           <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
           <Link to="/courses/new" className="btn btn-primary">+ New Course</Link>
         </div>
@@ -84,7 +84,7 @@ export default function MyCoursesPage() {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
           </div>
         ) : error ? (
-          <div className="text-center py-20">
+          <div className="text-center py-20 animate-fade-up delay-150">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
               <p className="text-red-600 font-semibold mb-2">Error Loading Courses</p>
               <p className="text-red-500 text-sm">{error}</p>
@@ -97,15 +97,15 @@ export default function MyCoursesPage() {
             </div>
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="text-center py-20 text-gray-500 animate-fade-up delay-150">
             <p className="text-5xl mb-4">📚</p>
             <p className="text-lg">No courses yet.</p>
             <Link to="/courses/new" className="btn btn-primary mt-4 inline-block">Create your first course</Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-fade-up delay-200">
             {courses.map(course => (
-              <div key={course.id} className="card flex items-center gap-4">
+              <div key={course.id} className="card flex items-center gap-4 hover:shadow-md transition-shadow">
                 <div className="w-20 h-16 bg-indigo-100 rounded-lg flex items-center justify-center text-2xl flex-shrink-0">
                   {course.thumbnail_url ? (
                     <img src={course.thumbnail_url} alt="" className="w-full h-full object-cover rounded-lg" />
