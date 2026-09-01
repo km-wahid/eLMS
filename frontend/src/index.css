@@ -16,26 +16,51 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-semibold py-2.5 px-4 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/15 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply bg-slate-950 hover:bg-indigo-700 text-white shadow-sm;
+    @apply bg-slate-950 hover:bg-indigo-600 text-white shadow-md hover:shadow-indigo-500/25;
   }
 
   .btn-secondary {
-    @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm;
+    @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-indigo-300 shadow-sm;
   }
 
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-slate-200/80;
+    @apply bg-white rounded-2xl shadow-sm border border-slate-200/80 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-indigo-300/80 hover:scale-[1.01];
   }
 
   .input {
-    @apply block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100;
+    @apply block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 hover:border-slate-300;
   }
 
   .page-shell { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
   .eyebrow { @apply text-xs font-bold uppercase tracking-[0.18em] text-indigo-600; }
-  .surface { @apply rounded-3xl border border-slate-200/70 bg-white shadow-sm; }
+  .surface { @apply rounded-3xl border border-slate-200/70 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-indigo-200; }
 }
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-250 { animation-delay: 250ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
